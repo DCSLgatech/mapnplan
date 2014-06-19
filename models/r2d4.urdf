@@ -344,7 +344,7 @@
     <sensor type="ray" name="laser">
       <pose>0 0 0 0 0 0</pose>
       <visualize>true</visualize>
-      <update_rate>0.5</update_rate>
+      <update_rate>2</update_rate>
       <ray>
         <scan>
           <horizontal>
@@ -372,7 +372,7 @@
       </ray>
       <plugin name="gazebo_ros_head_hokuyo_controller" filename="libgazebo_ros_block_laser.so">
         <topicName>/base_scan</topicName>
-      	<updateRate>0.5</updateRate>
+      	<updateRate>2</updateRate>
         <frameName>hokuyo_link</frameName>
       </plugin> 
     </sensor>

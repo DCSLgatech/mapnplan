@@ -31,9 +31,9 @@ void goalCallback(const geometry_msgs::Point::ConstPtr& msg)
 void transformTreeToMeanVal(octomap::OcTreeNode* node){
 	if(node->hasChildren()){
 		for (unsigned int i=0; i<8; i++) {
-	    if (node->childExists(i)) {
-	      transformTreeToMeanVal(node->getChild(i));
-	    }else{
+	    	if (node->childExists(i)) {
+	      		transformTreeToMeanVal(node->getChild(i));
+	    	}else{
 				node->createChild(i);
 				node->getChild(i)->setLogOdds(octomap::logodds(unknownSpaceProba));
 			}
@@ -73,15 +73,30 @@ void octomapCallback(const octomap_msgs::Octomap& msg)
 	}
 
 	//change to mean instead of max and set propability to 1 outside the allowed plane
-	transformTreeToMeanVal(tree->getRoot());	
+	// transformTreeToMeanVal(tree->getRoot());	
+
+	octomap::point3d m_try(10.0,-2.0,0.5);
+	// ROS_INFO("#######################################");
+	// ROS_INFO("planner.cpp:\t%f",tree->search(tree->coordToKey(m_try))->getOccupancy());
+	// ROS_INFO("#######################################");
+
 	for(octomap::OcTree::tree_iterator it = tree->begin_tree(),	end=tree->end_tree(); it!= end; ++it)
 	{
 		if(it.getCoordinate().z()<0.8 && it.getCoordinate().z()>0.2)
-			0;
+			int bananer = 0;
 		else
 			it->setLogOdds(octomap::logodds(1.0));
 	}
+
+	// ROS_INFO("#######################################");
+	// ROS_INFO("planner.cpp 2:\t%f",tree->search(tree->coordToKey(m_try))->getOccupancy());
+	// ROS_INFO("#######################################");
+
 	transformTreeToMeanVal(tree->getRoot());	
+
+	ROS_INFO("#######################################");
+	ROS_INFO("planner.cpp 3:\t%f",tree->search(tree->coordToKey(m_try))->getOccupancy());
+	ROS_INFO("#######################################");
 
 	//create algo and solve	
 	msp::MSP3D algo(*tree,16);	
@@ -112,7 +127,7 @@ void octomapCallback(const octomap_msgs::Octomap& msg)
 	traj_visu.id=1;
 	traj_visu.scale.x=0.05;
 	traj_visu.scale.y=0.05;
-	traj_visu.color.b = 1.0;
+	traj_visu.color.r = 1.0;
 	traj_visu.color.a = 1.0;
 	for(int i=0;i<sol.size();++i){
 		geometry_msgs::Point p;

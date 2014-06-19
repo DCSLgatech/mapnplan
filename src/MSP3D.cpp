@@ -7,12 +7,14 @@
 #include <numeric>
 #include <sstream>
 #include <stdexcept>
+#include <ros/ros.h>
 
 
 namespace msp{
 MSP3D::MSP3D(octomap::OcTree &tree, int max_depth):m_tree(tree),m_path_found(false),m_visu(false),m_alpha(1.0),m_eps(tree.getResolution()/10.0),m_max_tree_depth(max_depth),m_lambda1(0.999),m_lambda2(0.001) {
 	m_M=100*pow(8,max_depth);
-	m_epsilon=pow(0.5,1+3*m_max_tree_depth);
+	m_epsilon=0.4;
+	// m_epsilon=pow(0.5,1+3*m_max_tree_depth);
 	//m_epsilon=0.0000025;
 	m_child_dir.push_back(octomap::point3d(-1,-1,-1));
 	m_child_dir.push_back(octomap::point3d(1,-1,-1));
@@ -25,23 +27,32 @@ MSP3D::MSP3D(octomap::OcTree &tree, int max_depth):m_tree(tree),m_path_found(fal
 }
 
 bool MSP3D::init(octomap::point3d start,octomap::point3d end){
-	if(m_tree.coordToKeyChecked(start ,m_start) && m_tree.coordToKeyChecked(end ,m_end)){
+	if(m_tree.coordToKeyChecked(start ,m_start)){ 
+		// && m_tree.coordToKeyChecked(end ,m_end)){
+		m_end = m_tree.coordToKey(end);
 		//m_current_point=m_start;
 		m_current_coord=m_tree.keyToCoord(m_start);
 		m_start_coord=m_tree.keyToCoord(m_start);
 		m_end_coord=m_tree.keyToCoord(m_end);
-		m_current_path.clear();
+		std::cout << m_end_coord << std::endl;
 		m_path_cost.clear();
 		m_current_path.push_back(m_start_coord);
 		m_misleading.clear();
 		m_misleading[m_current_coord]=std::set<octomap::point3d,Point3D_Less>();
 		m_nb_step=0;
 		m_nb_backtrack=0;
+
+		// octomap::point3d m_try(10.0,-2.0,0.5);
+		// ROS_INFO("#######################################");
+		// ROS_INFO("%f",m_tree.search(m_tree.coordToKey(m_try))->getOccupancy());
+		// ROS_INFO("#######################################");
+
 		return true;
 	}else{
-		std::cout << "start or goal not on map" << std::endl;
+		ROS_INFO("start or goal not on map");
 		exit(1);
 	}
+
 	return false;
 }
 
@@ -150,14 +161,17 @@ bool MSP3D::step(){
 
 bool MSP3D::run(){
 	if(m_tree.search(m_start)->getOccupancy()>1-m_epsilon || m_tree.search(m_end)->getOccupancy()>1-m_epsilon){
-		std::cout<<"start or end is an obstacle"<< std::endl;
+		ROS_INFO("%f",m_tree.search(m_end)->getOccupancy());
+		ROS_INFO("start or end is an obstacle");
 		return false;
 	}
 	while(step()){/*std::cout<<*/++m_nb_step;}
 	std::cout<< "NB backtrack : " << m_nb_backtrack << std::endl;
 	if(m_path_found){
+		ROS_INFO("path found");
 		return true;
 	}else{
+		ROS_INFO("path  not found");
 		return false;
 	}
 }
