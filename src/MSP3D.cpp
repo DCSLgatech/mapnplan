@@ -263,10 +263,14 @@ bool MSP3D::findLRNode(octomap::point3d& pt,octomap::OcTreeKey& key, octomap::po
 
 void MSP3D::add_node_to_reduced_vertices(octomap::OcTreeNode* node,octomap::point3d coord, double size){
 //	std::cout << coord << " , " << size << " , " << node->getOccupancy() <<std::endl;
-	if((coord-m_current_coord).norm()>m_alpha*size  || !(node->hasChildren())){
+	//&& coord.z()-size/2<robot_height && coord.z()+size/2>robot_height
+	double robot_height=0.545;
+	if(((coord-m_current_coord).norm()>m_alpha*size  || !(node->hasChildren())) ){
 		if(!inPath(coord,size)
 				&& node->getOccupancy()<1-m_epsilon
 				&& m_current_forbidden.find(coord)==m_current_forbidden.end()
+				&& coord.z()-size*0.5<robot_height
+				&& coord.z()+size*0.5>robot_height
 			){
 			m_nodes.push_back(std::pair<octomap::point3d,double>(coord,size));
 			m_cost.push_back(cost_func(node->getOccupancy())*pow(size/m_tree.getNodeSize(m_max_tree_depth),3));

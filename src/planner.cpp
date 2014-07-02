@@ -114,8 +114,10 @@ void octomapCallback(const octomap_msgs::Octomap& msg)
 			p22.z()=0.6;
 		for(octomap::OcTree::leaf_bbx_iterator it2 = tree->begin_leafs_bbx (p11,p22),	end2=tree->end_leafs_bbx (); it2!= end2; ++it2)
 		{
-			if(it2->getLogOdds()>max){
-				max=it2->getLogOdds();
+			if(it2.getCoordinate().z()-it2.getSize()/2<robot_height && it2.getCoordinate().z()+it2.getSize()/2>robot_height){
+				if(it2->getLogOdds()>max){
+					max=it2->getLogOdds();
+				}
 			}
 		}
 		it->setLogOdds(max);
