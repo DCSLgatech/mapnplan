@@ -11,10 +11,10 @@
 
 
 namespace msp{
-MSP3D::MSP3D(octomap::OcTree &tree, int max_depth):m_tree(tree),m_path_found(false),m_visu(false),m_alpha(1.0),m_eps(tree.getResolution()/10.0),m_max_tree_depth(max_depth),m_lambda1(0.999),m_lambda2(0.001) {
+MSP3D::MSP3D(octomap::OcTree &tree, int max_depth):m_tree(tree),m_path_found(false),m_visu(false),m_alpha(1.0),m_eps(tree.getResolution()/10.0),m_max_tree_depth(max_depth),m_lambda1(0.5),m_lambda2(0.5) {
 	m_M=100*pow(8,max_depth);
-	m_epsilon=0.4;
-	// m_epsilon=pow(0.5,1+3*m_max_tree_depth);
+	m_epsilon=0.1;
+//	m_epsilon=pow(0.5,1+3*m_max_tree_depth);
 	//m_epsilon=0.0000025;
 	m_child_dir.push_back(octomap::point3d(-1,-1,-1));
 	m_child_dir.push_back(octomap::point3d(1,-1,-1));
@@ -27,26 +27,19 @@ MSP3D::MSP3D(octomap::OcTree &tree, int max_depth):m_tree(tree),m_path_found(fal
 }
 
 bool MSP3D::init(octomap::point3d start,octomap::point3d end){
-	if(m_tree.coordToKeyChecked(start ,m_start)){ 
-		// && m_tree.coordToKeyChecked(end ,m_end)){
-		m_end = m_tree.coordToKey(end);
-		//m_current_point=m_start;
-		m_current_coord=m_tree.keyToCoord(m_start);
-		m_start_coord=m_tree.keyToCoord(m_start);
-		m_end_coord=m_tree.keyToCoord(m_end);
+	if(findLRNode(start, m_start, m_start_coord) && findLRNode(end, m_end, m_end_coord)){
+		std::cout << "Start :" << start << std::endl;
+		std::cout << m_start_coord << std::endl;
+		std::cout << "Goal :" << end << std::endl;
 		std::cout << m_end_coord << std::endl;
+		m_current_coord=m_start_coord;
 		m_path_cost.clear();
 		m_current_path.push_back(m_start_coord);
 		m_misleading.clear();
 		m_misleading[m_current_coord]=std::set<octomap::point3d,Point3D_Less>();
 		m_nb_step=0;
 		m_nb_backtrack=0;
-
-		// octomap::point3d m_try(10.0,-2.0,0.5);
-		// ROS_INFO("#######################################");
-		// ROS_INFO("%f",m_tree.search(m_tree.coordToKey(m_try))->getOccupancy());
-		// ROS_INFO("#######################################");
-
+		m_speed_up=true;
 		return true;
 	}else{
 		ROS_INFO("start or goal not on map");
@@ -130,6 +123,7 @@ bool MSP3D::step(){
 
 			if(next_point_id==m_end_index){
 				std::cout << "goal reached" << std::endl;
+				std::cout << "goal" <<m_nodes[m_end_index].first << ", "<<  m_nodes[m_end_index].second<< std::endl;
 				m_path_found=true;
 //				std::stringstream it_name;
 //				it_name << "iteration0.ot";
@@ -161,13 +155,15 @@ bool MSP3D::step(){
 
 bool MSP3D::run(){
 	if(m_tree.search(m_start)->getOccupancy()>1-m_epsilon || m_tree.search(m_end)->getOccupancy()>1-m_epsilon){
-		ROS_INFO("%f",m_tree.search(m_end)->getOccupancy());
+		ROS_INFO("goal : %f",m_tree.search(m_end)->getOccupancy());
+		ROS_INFO("start : %f",m_tree.search(m_start)->getOccupancy());
 		ROS_INFO("start or end is an obstacle");
 		return false;
 	}
 	while(step()){/*std::cout<<*/++m_nb_step;}
 	std::cout<< "NB backtrack : " << m_nb_backtrack << std::endl;
 	if(m_path_found){
+		std::cout << "Goal MSP3D: " << m_end_coord << std::endl;
 		ROS_INFO("path found");
 		return true;
 	}else{
@@ -237,6 +233,34 @@ bool MSP3D::inPath(octomap::point3d pt,double size){
 	return false;
 }
 
+bool MSP3D::findLRNode(octomap::point3d& pt,octomap::OcTreeKey& key, octomap::point3d& coord){
+	octomap::OcTreeNode* node=m_tree.getRoot();
+	octomap::point3d pos(0,0,0);
+	double size=m_tree.getNodeSize(0);
+	while(node->hasChildren()){
+		bool updated=false;
+		for(int i=0;i<8;++i){
+//			std::cout << "pt " << pt <<std::endl;
+//			std::cout << "pos " << pos+m_child_dir[i]*0.25*size <<std::endl;
+//			std::cout << "size " << 0.5*size <<std::endl;
+			if(is_in(pt,std::pair<octomap::point3d,double>(pos+m_child_dir[i]*0.25*size,size*0.5))){
+				node=node->getChild(i);
+				pos=pos+m_child_dir[i]*0.25*size;
+				size=size*0.5;
+				updated=true;
+				break;
+			}
+		}
+		if(!updated){
+			std::cout<<"Error in datastructure"<< std::endl;
+			return false;
+		}
+	}
+	m_tree.coordToKeyChecked(pos,key);
+	coord=pos;
+	return true;
+}
+
 void MSP3D::add_node_to_reduced_vertices(octomap::OcTreeNode* node,octomap::point3d coord, double size){
 //	std::cout << coord << " , " << size << " , " << node->getOccupancy() <<std::endl;
 	if((coord-m_current_coord).norm()>m_alpha*size  || !(node->hasChildren())){
@@ -280,7 +304,8 @@ void MSP3D::reducedGraph(){
 //		std::cout<< "node " << i << ":" << m_nodes[i].first <<std::endl;
 		m_graph.add_vertex(i,m_lambda2*(m_nodes[i].first-m_end_coord).norm());
 		if(is_start(m_nodes[i])){
-//			std::cout<<"start: "<< m_nodes[i].first <<std::endl;
+//			std::cout<< "start_coord" << m_current_coord << std::endl;
+//			std::cout<<"start: "<< m_nodes[i].first << ", " << m_nodes[i].second <<std::endl;
 			if(m_start_index!=-1){
 				std::cout << "2 start nodes, fail" << std::endl;
 				return;
@@ -304,6 +329,7 @@ void MSP3D::reducedGraph(){
 	}
 	if(m_end_index==-1){
 		std::cout << "0 end node, fail" << std::endl;
+		std::cout<< "goal :" << m_end_coord << std::endl;
 		return;
 	}
 	for(int i=0;i<l;++i){
@@ -422,7 +448,7 @@ bool MSP3D::is_goal(std::pair<octomap::point3d,double> &node){
 
 bool MSP3D::is_in(octomap::point3d pt,std::pair<octomap::point3d,double> node){
 	double l=0.5*node.second;
-	if(fabs(pt.x()-node.first.x())<l && fabs(pt.y()-node.first.y())<l && fabs(pt.z()-node.first.z())<l){
+	if(fabs(pt.x()-node.first.x())<=l+m_eps && fabs(pt.y()-node.first.y())<=l+m_eps && fabs(pt.z()-node.first.z())<=l+m_eps){
 		return true;
 	}
 	return false;

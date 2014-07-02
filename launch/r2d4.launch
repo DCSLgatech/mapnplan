@@ -1,6 +1,6 @@
 <launch>
 
-	<param name="robot_description" textfile="$(find multiscale_mapnplan)/models/r2d4.urdf"/>
+	<param name="robot_description" textfile="$(find mapnplan)/models/r2d4.urdf"/>
 
 
   <!-- We resume the logic in empty_world.launch, changing only the name of the world to be launched -->
@@ -14,7 +14,7 @@
   </include>
 
 	<!-- Spawn a robot into Gazebo -->
-	<node name="spawn_urdf" pkg="gazebo_ros" type="spawn_model" args="-file $(find multiscale_mapnplan)/models/r2d4.urdf -urdf -100 -z 1 -model r2d2"/>
+	<node name="spawn_urdf" pkg="gazebo_ros" type="spawn_model" args="-file $(find mapnplan)/models/r2d4.urdf -urdf -100 -z 1 -model r2d2"/>
 
 <!-- start robot state publisher -->
 <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher" output="screen" >
@@ -24,12 +24,12 @@
 
 <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher" />
 
-<node name="waypoint_tracker" pkg="multiscale_mapnplan" type="2dwaypoint_tracker" />
+<node name="waypoint_tracker" pkg="mapnplan" type="2dwaypoint_tracker" />
 
-<node name="pointcloud2pointcloud2" pkg="multiscale_mapnplan" type="pointcloud2pointcloud2" />
+<node name="pointcloud2pointcloud2" pkg="mapnplan" type="pointcloud2pointcloud2" />
 
 <node pkg="octomap_server" type="octomap_server_node" name="octomap_server">  
-            <param name="resolution" value="0.3" />  
+            <param name="resolution" value="0.1" />  
               
             <!-- fixed map frame (set to 'map' if SLAM or localization running!) -->  
             <param name="frame_id" type="string" value="odom" />  
@@ -38,27 +38,31 @@
             <param name="max_sensor_range" value="10.0" />  
             <!-- maximum range to integrate (speedup!) -->  
             <param name="min_sensor_range" value="0.30" />  
+            
+           <!-- <param name="filter_ground" value="true" />   -->
+            
+           <!-- <param name="ground_filter/distance" value="0.2" />   -->
               
        </node> 
 
-<node name="rviz" pkg="rviz" type="rviz" args="-d $(find multiscale_mapnplan)/config/config.rviz" />
+<node name="rviz" pkg="rviz" type="rviz" args="-d $(find mapnplan)/config/config.rviz" />
 
-<node name="planner" pkg="multiscale_mapnplan" type="planner" output="screen"/>
+<node name="planner" pkg="mapnplan" type="planner" output="screen"/>
 
 <node pkg="rostopic" type="rostopic" name="goal_pub"
         args='pub planner_goal -1 geometry_msgs/Point "{x: -5.0, y: -2.0, z: 0.0}" ' output="screen" />
 
  <!--<node name="controller_spawner" pkg="controller_manager" type="spawner"
-          args="$(find multiscale_mapnplan)/config/controller.yaml"/> -->
+          args="$(find mapnplan)/config/controller.yaml"/> -->
 
 <!-- Load joint controller configurations from YAML file to parameter server -->
-  <rosparam file="$(find multiscale_mapnplan)/config/controller.yaml" command="load"/>
+  <rosparam file="$(find mapnplan)/config/controller.yaml" command="load"/>
 
   <!-- load the controllers -->
   <!--<node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false"
     output="screen" args="head_swivel_velocity_controller joint_state_controller"/>-->
 
 <node pkg="rostopic" type="rostopic" name="head_speed_pub"
-        args='pub -r 1 /head_swivel_velocity_controller/command std_msgs/Float64 "data: 0.1"' output="screen" />
+        args='pub -r 1 /head_swivel_velocity_controller/command std_msgs/Float64 "data: 0.1"' />
 
 </launch>

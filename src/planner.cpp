@@ -8,9 +8,11 @@
 
 ros::Publisher waypoint_pub;
 ros::Publisher rviz_traj_pub;
+ros::Publisher tree_pub;
+double robot_height=0.545;
 octomap::point3d goal(0,0,0);
 octomap::point3d start(0,0,0);
-octomap::point3d waypoint2(0,0,0.545);
+octomap::point3d waypoint2(0,0,robot_height);
 bool running=false;
 
 double unknownSpaceProba=0.5;
@@ -19,13 +21,13 @@ double unknownSpaceProba=0.5;
 void measurementCallback(const nav_msgs::Odometry::ConstPtr& msg)
 {
 	if(!running)
-		start=octomap::point3d(msg->pose.pose.position.x,msg->pose.pose.position.y,0.545);
+		start=octomap::point3d(msg->pose.pose.position.x,msg->pose.pose.position.y,robot_height);
 }
 
 void goalCallback(const geometry_msgs::Point::ConstPtr& msg)
 {
 	if(!running)
-		goal=octomap::point3d(msg->x,msg->y,0.545);
+		goal=octomap::point3d(msg->x,msg->y,robot_height);
 }
 
 void transformTreeToMeanVal(octomap::OcTreeNode* node){
@@ -45,23 +47,10 @@ void transformTreeToMeanVal(octomap::OcTreeNode* node){
 void octomapCallback(const octomap_msgs::Octomap& msg)
 {
 	running=true;
-	/*if(waypoint2.distanceXY(start)>0.1){
-		if(waypoint2==octomap::point3d(0,0,0.545)){
-			waypoint2=start;
-		}
-		std::cout<< "distance to waypoint:" << (waypoint2-start).norm() << std::endl;
-		geometry_msgs::Point waypoint;
-		waypoint.x=waypoint2.x();
-		waypoint.y=waypoint2.y();
-		waypoint.z=waypoint2.z();
-		waypoint_pub.publish(waypoint);
-		running=false;
-		return;
-	}*/
 	//load tree
 	octomap::OcTree* tree;
 	octomap::AbstractOcTree* tree1=octomap_msgs::msgToMap(msg);
-	if(tree){ // read error returns NULL
+	if(tree1){ // read error returns NULL
 		tree = dynamic_cast<octomap::OcTree*>(tree1);
 		if (tree){ // cast succeeds if correct type
 		// do something....
@@ -71,38 +60,81 @@ void octomapCallback(const octomap_msgs::Octomap& msg)
 	}else{
 		return;
 	}
-
-	//change to mean instead of max and set propability to 1 outside the allowed plane
-	// transformTreeToMeanVal(tree->getRoot());	
-
-	octomap::point3d m_try(10.0,-2.0,0.5);
-	// ROS_INFO("#######################################");
-	// ROS_INFO("planner.cpp:\t%f",tree->search(tree->coordToKey(m_try))->getOccupancy());
-	// ROS_INFO("#######################################");
-
-	for(octomap::OcTree::tree_iterator it = tree->begin_tree(),	end=tree->end_tree(); it!= end; ++it)
-	{
-		if(it.getCoordinate().z()<0.8 && it.getCoordinate().z()>0.2)
-			int bananer = 0;
-		else
-			it->setLogOdds(octomap::logodds(1.0));
+	octomap::OcTree* tree_padded;
+	octomap::AbstractOcTree* tree_padded1=octomap_msgs::msgToMap(msg);
+	if(tree_padded1){ // read error returns NULL
+		tree_padded = dynamic_cast<octomap::OcTree*>(tree_padded1);
+		if (tree_padded){ // cast succeeds if correct type
+		// do something....
+		}else{
+			return;
+		}
+	}else{
+		return;
 	}
 
-	// ROS_INFO("#######################################");
-	// ROS_INFO("planner.cpp 2:\t%f",tree->search(tree->coordToKey(m_try))->getOccupancy());
-	// ROS_INFO("#######################################");
-
+	//change to mean instead of max and set propability to 1 outside the allowed plane
+	for(octomap::OcTree::tree_iterator it = tree->begin_tree(),	end=tree->end_tree(); it!= end; ++it)
+	{
+		if(it.getCoordinate().z()-it.getSize()/2<robot_height && it.getCoordinate().z()+it.getSize()/2>robot_height){
+			if(it->getOccupancy()>0.6){
+				it->setLogOdds(octomap::logodds(1.0));
+			}
+		}else{
+			it->setLogOdds(octomap::logodds(1.0));
+		}
+	}
 	transformTreeToMeanVal(tree->getRoot());	
+	for(octomap::OcTree::tree_iterator it = tree_padded->begin_tree(),	end=tree_padded->end_tree(); it!= end; ++it)
+	{
+		if(it.getCoordinate().z()-it.getSize()/2<robot_height && it.getCoordinate().z()+it.getSize()/2>robot_height){
+				if(it->getOccupancy()>0.6){
+					it->setLogOdds(octomap::logodds(1.0));
+				}
+		}else{
+			it->setLogOdds(octomap::logodds(1.0));
+		}
+	}
+	transformTreeToMeanVal(tree_padded->getRoot());
+	//Padding
+//	octomap::point3d p1(-10000,-10000,0.2);
+//	octomap::point3d p2(10000,10000,0.8);
+	octomap::point3d p1(-10000,-10000,0.0);
+	octomap::point3d p2(10000,10000,1.0);
+	double padding_radius=0.4;
+	octomap::point3d radius(padding_radius,padding_radius,padding_radius);
+	for(octomap::OcTree::leaf_bbx_iterator it = tree_padded->begin_leafs_bbx (p1,p2),	end=tree_padded->end_leafs_bbx (); it!= end; ++it)
+	{
+		double max=it->getLogOdds();
+		octomap::point3d p11=it.getCoordinate()-radius;
+		octomap::point3d p22=it.getCoordinate()+radius;
+		if(p11.z()<0.5)
+			p11.z()=0.5;
+		if(p22.z()>0.6)
+			p22.z()=0.6;
+		for(octomap::OcTree::leaf_bbx_iterator it2 = tree->begin_leafs_bbx (p11,p22),	end2=tree->end_leafs_bbx (); it2!= end2; ++it2)
+		{
+			if(it2->getLogOdds()>max){
+				max=it2->getLogOdds();
+			}
+		}
+		it->setLogOdds(max);
+	}
+	transformTreeToMeanVal(tree_padded->getRoot());
 
-	ROS_INFO("#######################################");
-	ROS_INFO("planner.cpp 3:\t%f",tree->search(tree->coordToKey(m_try))->getOccupancy());
-	ROS_INFO("#######################################");
+	octomap_msgs::Octomap tree_msg;
+	if(octomap_msgs::fullMapToMsg(*tree_padded,tree_msg)){
+		tree_msg.header=msg.header;
+		tree_pub.publish(tree_msg);
+	}
 
 	//create algo and solve	
-	msp::MSP3D algo(*tree,16);	
+	msp::MSP3D algo(*tree_padded,16);
 	algo.init(start,goal);
-	algo.run();
-
+	if (!algo.run()){
+		return;
+	}
+	std::cout<<"Goal: "<< goal << std::endl;
 	//get solution and publish
 	std::deque<octomap::point3d> sol=algo.getPath();
 	if(sol.size()<2){
@@ -113,7 +145,7 @@ void octomapCallback(const octomap_msgs::Octomap& msg)
 	geometry_msgs::Point waypoint;
 	waypoint.x=sol[1].x();
 	waypoint.y=sol[1].y();
-	waypoint.z=0.545;
+	waypoint.z=robot_height;
 	waypoint_pub.publish(waypoint);
 	waypoint2=sol[1];
 	
@@ -153,6 +185,7 @@ int main(int argc, char **argv)
   ros::Subscriber subGoal = n.subscribe("planner_goal", 1000, goalCallback);
   waypoint_pub = n.advertise<geometry_msgs::Point>("waypoint", 1000);
   rviz_traj_pub = n.advertise<visualization_msgs::Marker>("rviz_traj", 1000);
+  tree_pub = n.advertise<octomap_msgs::Octomap>("padded_tree", 1);
   ros::spin();
   return 0;
 }

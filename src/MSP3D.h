@@ -45,6 +45,7 @@ namespace msp{
 		protected:
 			bool inPath(octomap::point3d pt,double size);
 			octomap::OcTreeNode* findNode(octomap::point3d pt);
+			bool findLRNode(octomap::point3d& pt,octomap::OcTreeKey& key, octomap::point3d& coord);
 			double low_cost(octomap::point3d pt);
 			void reducedGraph();
 			void Gfull();

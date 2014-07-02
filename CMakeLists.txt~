@@ -111,6 +111,7 @@ ADD_SUBDIRECTORY( src/kshortestpaths )
 # add_executable(multiscale_mapnplan_node src/multiscale_mapnplan_node.cpp)
 add_executable(2dwaypoint_tracker src/2dwaypoint_tracker.cpp)
 add_executable(laser2pointcloud2 src/laser2pointcloud2.cpp)
+add_executable(pointcloud2pointcloud2 src/pointcloud2pointcloud2.cpp)
 add_executable(planner src/planner.cpp src/MSP3D.cpp)
 
 ## Add cmake target dependencies of the executable/library
@@ -125,6 +126,9 @@ target_link_libraries(2dwaypoint_tracker
   ${catkin_LIBRARIES}
 )
 target_link_libraries(laser2pointcloud2
+  ${catkin_LIBRARIES}
+)
+target_link_libraries(pointcloud2pointcloud2
   ${catkin_LIBRARIES}
 )
 target_link_libraries(planner

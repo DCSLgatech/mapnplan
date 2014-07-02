@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package>
-  <name>multiscale_mapnplan</name>
+  <name>mapnplan</name>
   <version>0.0.0</version>
-  <description>The multiscale_mapnplan package</description>
+  <description>The mapnplan package</description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag --> 
   <!-- Example:  -->

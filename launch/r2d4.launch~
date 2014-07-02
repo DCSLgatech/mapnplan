@@ -29,7 +29,7 @@
 <node name="pointcloud2pointcloud2" pkg="multiscale_mapnplan" type="pointcloud2pointcloud2" />
 
 <node pkg="octomap_server" type="octomap_server_node" name="octomap_server">  
-            <param name="resolution" value="0.2" />  
+            <param name="resolution" value="0.1" />  
               
             <!-- fixed map frame (set to 'map' if SLAM or localization running!) -->  
             <param name="frame_id" type="string" value="odom" />  
@@ -38,12 +38,16 @@
             <param name="max_sensor_range" value="10.0" />  
             <!-- maximum range to integrate (speedup!) -->  
             <param name="min_sensor_range" value="0.30" />  
+            
+           <!-- <param name="filter_ground" value="true" />   -->
+            
+           <!-- <param name="ground_filter/distance" value="0.2" />   -->
               
        </node> 
 
 <node name="rviz" pkg="rviz" type="rviz" args="-d $(find multiscale_mapnplan)/config/config.rviz" />
 
-<node name="planner" pkg="multiscale_mapnplan" type="planner" />
+<node name="planner" pkg="multiscale_mapnplan" type="planner" output="screen"/>
 
 <node pkg="rostopic" type="rostopic" name="goal_pub"
         args='pub planner_goal -1 geometry_msgs/Point "{x: -5.0, y: -2.0, z: 0.0}" ' output="screen" />
@@ -55,10 +59,10 @@
   <rosparam file="$(find multiscale_mapnplan)/config/controller.yaml" command="load"/>
 
   <!-- load the controllers -->
- <!-- <node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false"
+  <!--<node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false"
     output="screen" args="head_swivel_velocity_controller joint_state_controller"/>-->
 
 <node pkg="rostopic" type="rostopic" name="head_speed_pub"
-        args='pub -r 1 /head_swivel_velocity_controller/command std_msgs/Float64 "data: 0.1"' output="screen" />
+        args='pub -r 1 /head_swivel_velocity_controller/command std_msgs/Float64 "data: 0.1"' />
 
 </launch>

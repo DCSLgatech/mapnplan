@@ -322,7 +322,7 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
-        <mesh filename="package://r2d2_description/meshes/hokuyo.dae"/>
+        <mesh filename="package://mapnplan/models/meshes/hokuyo.dae"/>
       </geometry>
     </visual>
 
@@ -343,21 +343,21 @@
   <gazebo reference="hokuyo_link">
     <sensor type="ray" name="laser">
       <pose>0 0 0 0 0 0</pose>
-      <visualize>true</visualize>
+      <visualize>false</visualize>
       <update_rate>2</update_rate>
       <ray>
         <scan>
           <horizontal>
-            <samples>100</samples>
-            <resolution>0.5</resolution>
+            <samples>200</samples>
+            <resolution>0.25</resolution>
             <min_angle>-3.14159</min_angle>
             <max_angle>3.14159</max_angle>
           </horizontal>
           <vertical>
-            <samples>30</samples>
-            <resolution>0.5</resolution>
-            <min_angle>-0.3</min_angle>
-            <max_angle>0.3</max_angle>
+            <samples>50</samples>
+            <resolution>0.25</resolution>
+            <min_angle>-0.2</min_angle>
+            <max_angle>0.2</max_angle>
           </vertical>
         </scan>
         <range>
