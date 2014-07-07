@@ -8,6 +8,7 @@
 #include <utility>
 #include <string>
 #include "kshortestpaths/Graph.h"
+#include <ros/ros.h>
 
 class Point3D_Less :
 public binary_function<octomap::point3d, octomap::point3d, bool> {
@@ -41,12 +42,14 @@ namespace msp{
 			void setAlpha(double a){m_alpha=a;}
 			void setSpeedUp(bool a){m_speed_up=a;}
 			std::vector<octomap::point3d> m_child_dir;
+			void setGiPublisher(ros::Publisher pub);
 
 		protected:
+			void publishGiRviz();
 			bool inPath(octomap::point3d pt,double size);
 			octomap::OcTreeNode* findNode(octomap::point3d pt);
 			bool findLRNode(octomap::point3d& pt,octomap::OcTreeKey& key, octomap::point3d& coord);
-			double low_cost(octomap::point3d pt);
+			//double low_cost(octomap::point3d pt);
 			void reducedGraph();
 			void Gfull();
 			void iterativeReducedGraph(octomap::OcTree::NodeType *n);
@@ -55,7 +58,7 @@ namespace msp{
 			bool is_goal(std::pair<octomap::point3d,double> &node);
 			bool is_in(octomap::point3d pt,std::pair<octomap::point3d,double> node);
 			double cost(int i, int j);
-			double cost_func(double F);
+			double cost_func(double F,double size);
 			void copyNode(octomap::OcTreeNode* n,octomap::OcTreeNode* nc);
 			void add_node_to_reduced_vertices(octomap::OcTreeNode* node,octomap::point3d coord, double size);
 			octomap::OcTreeKey m_start;
@@ -88,5 +91,6 @@ namespace msp{
 			double m_lambda2;
 			int m_max_tree_depth;
 			int m_nb_step;
+			ros::Publisher m_pub;
 	};
 }
