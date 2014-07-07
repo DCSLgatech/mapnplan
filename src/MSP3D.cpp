@@ -278,20 +278,20 @@ void MSP3D::add_node_to_reduced_vertices(octomap::OcTreeNode* node,octomap::poin
 		){
 			m_nodes.push_back(std::pair<octomap::point3d,double>(coord,size));
 			m_cost.push_back(cost_func(node->getOccupancy(),size)*pow(size/m_tree.getNodeSize(m_max_tree_depth),3));
+		}else{
+			std::pair<octomap::point3d,double> pn(coord,size);
+			if(!(node->hasChildren()) && is_start(pn)){
+				m_nodes.push_back(std::pair<octomap::point3d,double>(coord,size));
+				m_cost.push_back(cost_func(node->getOccupancy(),size)*pow(size/m_tree.getNodeSize(m_max_tree_depth),3));
+			}
 		}
 	}else{
-		std::pair<octomap::point3d,double> pn(coord,size);
-		if(!(node->hasChildren()) && is_start(pn)){
-			m_nodes.push_back(std::pair<octomap::point3d,double>(coord,size));
-			m_cost.push_back(cost_func(node->getOccupancy(),size)*pow(size/m_tree.getNodeSize(m_max_tree_depth),3));
-		}else{
-			for(int i=0;i<8;++i){
-				if(size<10.0 && !node->childExists(i)){
-					node->createChild(i);
-				}
-				if(node->childExists(i)){
-					add_node_to_reduced_vertices(node->getChild(i),coord+m_child_dir[i]*0.25*size,size*0.5);
-				}
+		for(int i=0;i<8;++i){
+			if(size<10.0 && !node->childExists(i)){
+				node->createChild(i);
+			}
+			if(node->childExists(i)){
+				add_node_to_reduced_vertices(node->getChild(i),coord+m_child_dir[i]*0.25*size,size*0.5);
 			}
 		}
 	}
@@ -355,8 +355,8 @@ void MSP3D::reducedGraph(){
 			//			std::cout<< "start_coord" << m_current_coord << std::endl;
 			//			std::cout<<"start: "<< m_nodes[i].first << ", " << m_nodes[i].second <<std::endl;
 			if(m_start_index!=-1){
-				std::cout << "2 start nodes, fail" << std::endl;
-				return;
+//				std::cout << "2 start nodes, fail" << std::endl;
+				//return;
 				//exit(1);
 			}
 			m_start_index=i;
@@ -364,8 +364,8 @@ void MSP3D::reducedGraph(){
 		if(is_goal(m_nodes[i])){
 			//			std::cout<<"end: "<< m_nodes[i].first <<std::endl;
 			if(m_end_index!=-1){
-				std::cout << "2 end nodes, fail" << std::endl;
-				return;
+//				std::cout << "2 end nodes, fail" << std::endl;
+				//return;
 				//exit(1);
 			}
 			m_end_index=i;
