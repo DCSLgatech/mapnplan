@@ -14,7 +14,7 @@
   </include>
 
 	<!-- Spawn a robot into Gazebo -->
-	<node name="spawn_urdf" pkg="gazebo_ros" type="spawn_model" args="-file $(find mapnplan)/models/r2d4.urdf -urdf -100 -z 1 -model r2d2"/>
+	<node name="spawn_urdf" pkg="gazebo_ros" type="spawn_model" args="-file $(find mapnplan)/models/r2d4.urdf -urdf -100 -x -0 -y -0 -z 1 -model r2d2"/>
 
 <!-- start robot state publisher -->
 <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher" output="screen" >
@@ -29,17 +29,17 @@
 <node name="pointcloud2pointcloud2" pkg="mapnplan" type="pointcloud2pointcloud2" />
 
 <node pkg="octomap_server" type="octomap_server_node" name="octomap_server">  
-            <param name="resolution" value="0.1" />  
+            <param name="resolution" value="0.2" />  
               
             <!-- fixed map frame (set to 'map' if SLAM or localization running!) -->  
             <param name="frame_id" type="string" value="odom" />  
               
             <!-- maximum range to integrate (speedup!) -->  
-            <param name="max_sensor_range" value="9.0" />  
+            <param name="max_sensor_range" value="8.0" />  
             <!-- maximum range to integrate (speedup!) -->  
-            <param name="min_sensor_range" value="0.30" />  
+            <param name="min_sensor_range" value="0.50" />  
             
-           <!-- <param name="filter_ground" value="true" />   -->
+           <!-- <param name="filter_ground" value="false" />   -->
             
            <!-- <param name="ground_filter/distance" value="0.2" />   -->
               
@@ -50,7 +50,7 @@
 <node name="planner" pkg="mapnplan" type="planner" output="screen"/>
 
 <node pkg="rostopic" type="rostopic" name="goal_pub"
-        args='pub planner_goal -1 geometry_msgs/Point "{x: 2.0, y: 2.0, z: 0.0}" ' output="screen" />
+        args='pub planner_goal -1 geometry_msgs/Point "{x: 2.0, y: 10.0, z: 0.0}" ' output="screen" />
 
  <!--<node name="controller_spawner" pkg="controller_manager" type="spawner"
           args="$(find mapnplan)/config/controller.yaml"/> -->

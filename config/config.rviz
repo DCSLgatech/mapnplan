@@ -6,6 +6,7 @@ Panels:
       Expanded:
         - /MarkerArray2
         - /MarkerArray3
+        - /Marker2
       Splitter Ratio: 0.5
     Tree Height: 745
   - Class: rviz/Selection
@@ -96,6 +97,16 @@ Visualization Manager:
           Show Axes: false
           Show Trail: false
           Value: true
+        head_ball:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        head_ball_box:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
         hokuyo_link:
           Alpha: 1
           Show Axes: false
@@ -152,7 +163,7 @@ Visualization Manager:
       Marker Topic: /rviz_traj
       Name: Marker
       Namespaces:
-        traj: true
+        {}
       Queue Size: 100
       Value: true
     - Alpha: 1
@@ -205,7 +216,15 @@ Visualization Manager:
       Marker Topic: /marker_tree_padded
       Name: MarkerArray
       Namespaces:
-        gi: true
+        {}
+      Queue Size: 100
+      Value: true
+    - Class: rviz/Marker
+      Enabled: true
+      Marker Topic: /rviz_traj2
+      Name: Marker
+      Namespaces:
+        {}
       Queue Size: 100
       Value: true
   Enabled: true
@@ -232,7 +251,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 19.7117
+      Distance: 24.7264
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.06
         Stereo Focal Distance: 1

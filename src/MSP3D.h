@@ -43,6 +43,7 @@ namespace msp{
 			void setSpeedUp(bool a){m_speed_up=a;}
 			std::vector<octomap::point3d> m_child_dir;
 			void setGiPublisher(ros::Publisher pub);
+			void setPathPublisher(ros::Publisher pub){m_rviz_traj_pub=pub;}
 
 		protected:
 			void publishGiRviz();
@@ -92,5 +93,6 @@ namespace msp{
 			int m_max_tree_depth;
 			int m_nb_step;
 			ros::Publisher m_pub;
+			ros::Publisher m_rviz_traj_pub;
 	};
 }

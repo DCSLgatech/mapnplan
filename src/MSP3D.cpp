@@ -11,7 +11,7 @@
 
 
 namespace msp{
-MSP3D::MSP3D(octomap::OcTree &tree, int max_depth):m_tree(tree),m_path_found(false),m_visu(false),m_alpha(1.0),m_eps(tree.getResolution()/10.0),m_max_tree_depth(max_depth),m_lambda1(0.5),m_lambda2(0.5) {
+MSP3D::MSP3D(octomap::OcTree &tree, int max_depth):m_tree(tree),m_path_found(false),m_visu(false),m_alpha(3.0),m_eps(tree.getResolution()/10.0),m_max_tree_depth(max_depth),m_lambda1(0.5),m_lambda2(0.5) {
 	m_M=100*pow(8,max_depth);
 	m_epsilon=0.49;
 	//	m_epsilon=pow(0.5,1+3*m_max_tree_depth);
@@ -92,6 +92,7 @@ bool MSP3D::step(){
 			//m_visited[m_current_coord]=	m_visited[m_current_coord]+1;
 
 			m_misleading[m_current_coord].insert(m_nodes[next_point_id].first);
+//			m_misleading[m_start_coord].insert(m_nodes[next_point_id].first);
 
 			//		std::cout<<"before adding element"<< std::endl;
 			//		for(std::deque<octomap::point3d>::iterator it=m_current_path.begin(),end=m_current_path.end();it!=end;++it){
@@ -109,6 +110,7 @@ bool MSP3D::step(){
 					if(m_nodes[next_point_id2].second==m_nodes[next_point_id].second){
 						//m_visited[m_nodes[next_point_id].first]=	m_visited[m_nodes[next_point_id].first]+1;
 						m_misleading[m_nodes[next_point_id].first].insert(m_nodes[next_point_id2].first);
+//						m_misleading[m_start_coord].insert(m_nodes[next_point_id2].first);
 						m_current_path.push_back(m_nodes[next_point_id2].first);
 						m_path_cost.push_back(m_cost[next_point_id2]);
 						next_point_id=next_point_id2;
@@ -136,6 +138,33 @@ bool MSP3D::step(){
 				//				std::cout << it_name.str() << std::endl;
 				return false;
 			}else{
+				visualization_msgs::Marker traj_visu;
+				traj_visu.header.frame_id="/odom";
+				traj_visu.header.stamp=ros::Time::now();
+				traj_visu.ns="traj2";
+				traj_visu.type=visualization_msgs::Marker::LINE_STRIP;
+				traj_visu.action=visualization_msgs::Marker::ADD;
+				traj_visu.id=1;
+				traj_visu.scale.x=0.05;
+				traj_visu.scale.y=0.05;
+				traj_visu.scale.z=0.05;
+				traj_visu.color.g = 1.0;
+				traj_visu.color.a = 1.0;
+				for(int i=0;i<m_current_path.size();++i){
+					geometry_msgs::Point p;
+					p.x=m_current_path[i].x();
+					p.y=m_current_path[i].y();
+					p.z=2;
+					traj_visu.points.push_back(p);
+				}
+				for(int i=0;i<result->length();++i){
+					geometry_msgs::Point p;
+					p.x=m_nodes[result->GetVertex(i)->getID()].first.x();
+					p.y=m_nodes[result->GetVertex(i)->getID()].first.y();
+					p.z=2;
+					traj_visu.points.push_back(p);
+				}
+				m_rviz_traj_pub.publish(traj_visu);
 				return true;
 			}
 		}
@@ -144,13 +173,15 @@ bool MSP3D::step(){
 		//std::cout << "shortest path not found" << std::endl;
 		//go back // if path empty => no solution return false
 		//m_visited[m_current_coord]=0;
-		m_misleading[m_current_coord].clear();
+//		m_misleading[m_current_coord].clear();
+//		m_misleading[m_start_coord].clear();
 		m_nb_backtrack++;
 		m_current_path.pop_back();
 		if(m_current_path.size()==0){
 			//no possible path
 			return false;
 		}else{
+//			m_misleading[m_current_path.back()].insert(m_current_coord);
 			m_current_coord=m_current_path.back();
 			m_path_cost.pop_back();
 			return true;
@@ -279,17 +310,17 @@ void MSP3D::add_node_to_reduced_vertices(octomap::OcTreeNode* node,octomap::poin
 			m_nodes.push_back(std::pair<octomap::point3d,double>(coord,size));
 			m_cost.push_back(cost_func(node->getOccupancy(),size)*pow(size/m_tree.getNodeSize(m_max_tree_depth),3));
 		}else{
-			std::pair<octomap::point3d,double> pn(coord,size);
-			if(!(node->hasChildren()) && is_start(pn)){
+			std::pair<octomap::point3d,double> pn(coord,size+0.5);
+			if(!(node->hasChildren()) && is_in(m_start_coord,pn) && !inPath(coord,size) ){
 				m_nodes.push_back(std::pair<octomap::point3d,double>(coord,size));
 				m_cost.push_back(cost_func(node->getOccupancy(),size)*pow(size/m_tree.getNodeSize(m_max_tree_depth),3));
 			}
 		}
 	}else{
 		for(int i=0;i<8;++i){
-			if(size<10.0 && !node->childExists(i)){
-				node->createChild(i);
-			}
+//			if(size<10.0 && !node->childExists(i)){
+//				node->createChild(i);
+//			}
 			if(node->childExists(i)){
 				add_node_to_reduced_vertices(node->getChild(i),coord+m_child_dir[i]*0.25*size,size*0.5);
 			}
@@ -337,6 +368,7 @@ void MSP3D::reducedGraph(){
 	m_end_index=-1;
 	try {
 		m_current_forbidden=m_misleading.at(m_current_coord);
+//		m_current_forbidden=m_misleading.at(m_start_coord);
 	}catch (const std::out_of_range& oor) {
 		m_current_forbidden=std::set<octomap::point3d,Point3D_Less>();
 	}
@@ -355,7 +387,7 @@ void MSP3D::reducedGraph(){
 			//			std::cout<< "start_coord" << m_current_coord << std::endl;
 			//			std::cout<<"start: "<< m_nodes[i].first << ", " << m_nodes[i].second <<std::endl;
 			if(m_start_index!=-1){
-//				std::cout << "2 start nodes, fail" << std::endl;
+				std::cout << "2 start nodes, fail" << std::endl;
 				//return;
 				//exit(1);
 			}
@@ -364,7 +396,7 @@ void MSP3D::reducedGraph(){
 		if(is_goal(m_nodes[i])){
 			//			std::cout<<"end: "<< m_nodes[i].first <<std::endl;
 			if(m_end_index!=-1){
-//				std::cout << "2 end nodes, fail" << std::endl;
+				std::cout << "2 end nodes, fail" << std::endl;
 				//return;
 				//exit(1);
 			}

@@ -9,6 +9,7 @@
 
 ros::Publisher waypoint_pub;
 ros::Publisher rviz_traj_pub;
+ros::Publisher rviz_traj2_pub;
 ros::Publisher tree_rviz_pub;
 ros::Publisher tree_padded_rviz_pub;
 ros::Publisher tree_pub;
@@ -78,11 +79,17 @@ void octomapCallback(const octomap_msgs::Octomap& msg)
 	}
 
 	//change to mean instead of max and set propability to 1 outside the allowed plane
+	transformTreeToMeanVal(tree->getRoot());
+	transformTreeToMeanVal(tree_padded->getRoot());
 	for(octomap::OcTree::tree_iterator it = tree->begin_tree(),	end=tree->end_tree(); it!= end; ++it)
 	{
 		if(it.getCoordinate().z()-it.getSize()/2<robot_height && it.getCoordinate().z()+it.getSize()/2>robot_height){
-			if(it->getOccupancy()>0.6){
+			if(it->getOccupancy()>0.51){
 				it->setLogOdds(octomap::logodds(1.0));
+			}else{
+				if(it->getOccupancy()<0.49){
+					it->setLogOdds(octomap::logodds(0.0));
+				}
 			}
 		}else{
 			it->setLogOdds(octomap::logodds(1.0));
@@ -92,8 +99,12 @@ void octomapCallback(const octomap_msgs::Octomap& msg)
 	for(octomap::OcTree::tree_iterator it = tree_padded->begin_tree(),	end=tree_padded->end_tree(); it!= end; ++it)
 	{
 		if(it.getCoordinate().z()-it.getSize()/2<robot_height && it.getCoordinate().z()+it.getSize()/2>robot_height){
-				if(it->getOccupancy()>0.6){
+				if(it->getOccupancy()>0.51){
 					it->setLogOdds(octomap::logodds(1.0));
+				}else{
+					if(it->getOccupancy()<0.49){
+						it->setLogOdds(octomap::logodds(0.0));
+					}
 				}
 		}else{
 			it->setLogOdds(octomap::logodds(1.0));
@@ -201,6 +212,7 @@ void octomapCallback(const octomap_msgs::Octomap& msg)
 	//create algo and solve
 	msp::MSP3D algo(*tree_padded,16);
 	algo.setGiPublisher(rviz_marker_array_pub);
+	algo.setPathPublisher(rviz_traj2_pub);
 	algo.init(start,goal);
 	if (!algo.run()){
 		return;
@@ -245,7 +257,7 @@ void octomapCallback(const octomap_msgs::Octomap& msg)
 	//free memory
 	free(tree);
 	running=false;
-	ros::Duration(1.0).sleep();
+//	ros::Duration(1.0).sleep();
 }
 
 int main(int argc, char **argv)
@@ -257,6 +269,7 @@ int main(int argc, char **argv)
   ros::Subscriber subGoal = n.subscribe("planner_goal", 1000, goalCallback);
   waypoint_pub = n.advertise<geometry_msgs::Point>("waypoint", 1000);
   rviz_traj_pub = n.advertise<visualization_msgs::Marker>("rviz_traj", 1000);
+  rviz_traj2_pub = n.advertise<visualization_msgs::Marker>("rviz_traj2", 1000);
   rviz_marker_array_pub = n.advertise<visualization_msgs::MarkerArray>("marker_array_gi", 1000);
   tree_rviz_pub= n.advertise<visualization_msgs::MarkerArray>("marker_tree", 1000);;
   tree_padded_rviz_pub= n.advertise<visualization_msgs::MarkerArray>("marker_tree_padded", 1000);;
