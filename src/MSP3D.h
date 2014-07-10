@@ -84,6 +84,7 @@ namespace msp{
 			std::vector<std::pair<octomap::point3d,double> > m_nodes; //coord,size
 			std::vector<double> m_cost;
 			std::vector<double> m_path_cost;
+			std::vector<double> m_full_path_estimate_cost;
 			std::vector<std::pair<octomap::point3d,double> > m_obstacles; //for debugging and display only
 			double m_eps;//used as margin for comparison (small compared to tree resolution)
 			double m_epsilon;

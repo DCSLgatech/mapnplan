@@ -9,7 +9,7 @@ ros::Publisher command_pub;
 double x_desired=0;
 double y_desired=0;
 
-double V_max=0.3;
+double V_max=2;
 double omega_max=1;
 double dtheta_max=0.2;
 double ds_max=0.5;
@@ -20,6 +20,7 @@ double lastY=0;
 void wayPointsCallback(const visualization_msgs::Marker::ConstPtr& msg)
 {
   traj=*msg;
+  traj.points.erase(traj.points.begin());
 	double minds=1000;
 	int ind=0;
 	for(int i=0;i<traj.points.size();++i){
@@ -31,7 +32,9 @@ void wayPointsCallback(const visualization_msgs::Marker::ConstPtr& msg)
 			ind=i;
 		}
 	}
-	traj.points.erase(traj.points.begin(),traj.points.begin()+ind);
+	if(minds<1){
+		traj.points.erase(traj.points.begin(),traj.points.begin()+ind);
+	}
 	geometry_msgs::Point p=traj.points.front();
 	traj.points.erase(traj.points.begin());
   x_desired=p.x;
@@ -85,7 +88,7 @@ void measurementCallback(const nav_msgs::Odometry::ConstPtr& msg)
 
 	std::cout<<"dx: "<<dx<<", dy:"<<dy<<", dtheta: "<< dtheta << std::endl; 
 
-	if(fabs(dtheta)>0.5){
+	if(fabs(dtheta)>0.1){
 		V=0;
 	}
 	if(fabs(ds)<0.01){

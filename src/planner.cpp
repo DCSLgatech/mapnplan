@@ -95,6 +95,7 @@ void octomapCallback(const octomap_msgs::Octomap& msg)
 			it->setLogOdds(octomap::logodds(1.0));
 		}
 	}
+	tree->prune();
 	transformTreeToMeanVal(tree->getRoot());	
 	for(octomap::OcTree::tree_iterator it = tree_padded->begin_tree(),	end=tree_padded->end_tree(); it!= end; ++it)
 	{
@@ -110,6 +111,7 @@ void octomapCallback(const octomap_msgs::Octomap& msg)
 			it->setLogOdds(octomap::logodds(1.0));
 		}
 	}
+	tree_padded->prune();
 	transformTreeToMeanVal(tree_padded->getRoot());
 	//Padding
 //	octomap::point3d p1(-10000,-10000,0.2);
@@ -142,6 +144,7 @@ void octomapCallback(const octomap_msgs::Octomap& msg)
 		}
 		it->setLogOdds(octomap::logodds(max));
 	}
+	tree_padded->prune();
 	transformTreeToMeanVal(tree_padded->getRoot());
 
 	octomap_msgs::Octomap tree_msg;
@@ -257,7 +260,7 @@ void octomapCallback(const octomap_msgs::Octomap& msg)
 	//free memory
 	free(tree);
 	running=false;
-//	ros::Duration(1.0).sleep();
+	ros::Duration(10.0).sleep();
 }
 
 int main(int argc, char **argv)

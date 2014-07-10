@@ -39,6 +39,7 @@ bool MSP3D::init(octomap::point3d start,octomap::point3d end){
 		//		std::cout << m_end_coord << std::endl;
 		m_current_coord=m_start_coord;
 		m_path_cost.clear();
+		m_full_path_estimate_cost.clear();
 		m_current_path.push_back(m_start_coord);
 		m_misleading.clear();
 		m_misleading[m_current_coord]=std::set<octomap::point3d,Point3D_Less>();
@@ -74,9 +75,9 @@ bool MSP3D::step(){
 		//go forward // if goal return false;
 		kshortestpaths::BasePath* result =yenAlg.next();
 		//		std::cout << "Cost: " << result->Weight() << " Length: " << result->length() << std::endl;
-
-		if(result->Weight()>=m_M){
-			//no path without obstacles from current to finish
+		double full_path_estimate_cost=getPathCost()+result->Weight();
+		if(result->Weight()>=m_M){// || (!m_full_path_estimate_cost.empty() &&full_path_estimate_cost>m_full_path_estimate_cost.back())){
+			//no path without obstacles from current to finish  or setback
 			//			std::cout << "shortest path with obstacles" << std::endl;
 			got_next=false;
 		}else{
@@ -101,6 +102,7 @@ bool MSP3D::step(){
 
 			m_current_path.push_back(m_nodes[next_point_id].first);
 			m_path_cost.push_back(m_cost[next_point_id]);
+			m_full_path_estimate_cost.push_back(full_path_estimate_cost);
 
 			if(m_speed_up){
 				int mv_fwd=2;
@@ -113,6 +115,7 @@ bool MSP3D::step(){
 //						m_misleading[m_start_coord].insert(m_nodes[next_point_id2].first);
 						m_current_path.push_back(m_nodes[next_point_id2].first);
 						m_path_cost.push_back(m_cost[next_point_id2]);
+						m_full_path_estimate_cost.push_back(full_path_estimate_cost);
 						next_point_id=next_point_id2;
 						++mv_fwd;
 					}else{
@@ -184,6 +187,7 @@ bool MSP3D::step(){
 //			m_misleading[m_current_path.back()].insert(m_current_coord);
 			m_current_coord=m_current_path.back();
 			m_path_cost.pop_back();
+			m_full_path_estimate_cost.pop_back();
 			return true;
 		}
 	}
@@ -233,7 +237,34 @@ bool MSP3D::runAs(){
 	std:;cout << "Cost: " << result->Weight() << " Length: " << result->length() << std::endl;
 }
 
-std::deque<octomap::point3d> MSP3D::getPath(){return m_current_path;}
+std::deque<octomap::point3d> MSP3D::getPath(){
+	// "smoothing"
+	octomap::point3d cur=m_current_path.front();
+	int i=2;
+	while(i<m_current_path.size()){
+		octomap::point3d cur2=m_current_path[i];
+		octomap::point3d inc=(cur2-cur)*(0.05/(cur2-cur).norm());
+		int jmax= (int)floor((cur2-cur).norm()/0.05);
+		bool safe=true;
+		for(int j=1;j<jmax;++j){
+			octomap::OcTreeKey key;
+			octomap::point3d coord;
+			octomap::point3d pointToTest=cur+inc*j;
+			findLRNode(pointToTest, key, coord);
+			if(m_tree.search(key)->getOccupancy()>1-m_epsilon){
+				safe=false;
+				break;
+			}
+		}
+		if(safe){
+				m_current_path.erase(m_current_path.begin()+i-1);
+		}else{
+			cur=m_current_path[i-1];
+			i=i+1;
+		}
+	}
+	return m_current_path;
+}
 
 double MSP3D::getPathCost(){
 	return std::accumulate(m_path_cost.begin(),m_path_cost.end(),0.0);//
