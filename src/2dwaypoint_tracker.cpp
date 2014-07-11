@@ -10,7 +10,7 @@ double x_desired=0;
 double y_desired=0;
 
 double V_max=2;
-double omega_max=1;
+double omega_max=3;
 double dtheta_max=0.2;
 double ds_max=0.5;
 visualization_msgs::Marker traj;
@@ -90,6 +90,8 @@ void measurementCallback(const nav_msgs::Odometry::ConstPtr& msg)
 
 	if(fabs(dtheta)>0.1){
 		V=0;
+	}else{
+		V*= (fabs(dtheta-0.1)<fabs(dtheta+0.1)?fabs(dtheta-0.1):fabs(dtheta+0.1))/0.1;
 	}
 	if(fabs(ds)<0.01){
 		V=0;

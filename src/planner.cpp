@@ -260,7 +260,7 @@ void octomapCallback(const octomap_msgs::Octomap& msg)
 	//free memory
 	free(tree);
 	running=false;
-	ros::Duration(10.0).sleep();
+	ros::Duration(1.0).sleep();
 }
 
 int main(int argc, char **argv)
