@@ -5,10 +5,10 @@
   <!-- We resume the logic in empty_world.launch, changing only the name of the world to be launched -->
   <include file="$(find gazebo_ros)/launch/empty_world.launch">
     <arg name="world_name" value="$(find mapnplan)/worlds/maze.sdf"/> <!-- Note: the world_name is with respect to GAZEBO_RESOURCE_PATH environmental variable -->
-    <arg name="paused" value="false"/>
+    <arg name="paused" value="true"/>
     <arg name="use_sim_time" value="true"/>
-    <arg name="gui" value="false"/>
-    <arg name="headless" value="true"/>
+    <arg name="gui" value="true"/>
+    <arg name="headless" value="false"/>
     <arg name="debug" value="false"/>
   </include>
 
@@ -28,16 +28,23 @@
 <node name="pointcloud2pointcloud2" pkg="mapnplan" type="pointcloud2pointcloud2" />
 
 <node pkg="octomap_server" type="octomap_server_node" name="octomap_server">  
-            <param name="resolution" value="0.2" />  
+            <param name="resolution" value="0.15" />  
               
             <!-- fixed map frame (set to 'map' if SLAM or localization running!) -->  
             <param name="frame_id" type="string" value="odom" />  
               
             <!-- maximum range to integrate (speedup!) -->  
-            <param name="max_sensor_range" value="8.0" />  
+<!--            <param name="max_sensor_range" value="15.0" /> -->
             <!-- maximum range to integrate (speedup!) -->  
-            <param name="min_sensor_range" value="0.50" />  
+<!--            <param name="min_sensor_range" value="0.00" /> -->
+            	
+            <param name="sensor_model/max_range" value="7.0" />
+            <param name="sensor_model/min_range" value="0.5" />
             
+            <param name="occupancy_min_z" value="0.0" />  
+            <param name="occupancy_max_z" value="1.0" />     
+            	
+            	     
            <!-- <param name="filter_ground" value="false" />   -->
             
            <!-- <param name="ground_filter/distance" value="0.2" />   -->

@@ -238,29 +238,39 @@ bool MSP3D::runAs(){
 }
 
 std::deque<octomap::point3d> MSP3D::getPath(){
+	double robot_height=0.545;
+	for(int i=0;i<m_current_path.size();++i){
+		m_current_path[i].z()=robot_height;
+	}
 	// "smoothing"
-	octomap::point3d cur=m_current_path.front();
-	int i=2;
-	while(i<m_current_path.size()){
-		octomap::point3d cur2=m_current_path[i];
-		octomap::point3d inc=(cur2-cur)*(0.05/(cur2-cur).norm());
-		int jmax= (int)floor((cur2-cur).norm()/0.05);
-		bool safe=true;
-		for(int j=1;j<jmax;++j){
-			octomap::OcTreeKey key;
-			octomap::point3d coord;
-			octomap::point3d pointToTest=cur+inc*j;
-			findLRNode(pointToTest, key, coord);
-			if(m_tree.search(key)->getOccupancy()>1-m_epsilon){
+	for(int pass=0;pass<3;++pass){
+		octomap::point3d cur=m_current_path.front();
+		int i=2;
+		while(i<m_current_path.size()){
+			octomap::point3d cur2=m_current_path[i];
+			bool safe=true;
+			if((cur2-cur).norm()>10){
 				safe=false;
-				break;
+			}else{
+				octomap::point3d inc=(cur2-cur)*(0.05/(cur2-cur).norm());
+				int jmax= (int)floor((cur2-cur).norm()/0.05);
+				for(int j=1;j<jmax;++j){
+					octomap::OcTreeKey key;
+					octomap::point3d coord;
+					octomap::point3d pointToTest=cur+inc*j;
+					findLRNode(pointToTest, key, coord);
+					if(m_tree.search(key)->getOccupancy()>1-m_epsilon){
+						safe=false;
+						break;
+					}
+				}
 			}
-		}
-		if(safe){
-				m_current_path.erase(m_current_path.begin()+i-1);
-		}else{
-			cur=m_current_path[i-1];
-			i=i+1;
+			if(safe){
+					m_current_path.erase(m_current_path.begin()+i-1);
+			}else{
+				cur=m_current_path[i-1];
+				i=i+1;
+			}
 		}
 	}
 	return m_current_path;
@@ -319,7 +329,7 @@ bool MSP3D::findLRNode(octomap::point3d& pt,octomap::OcTreeKey& key, octomap::po
 			}
 		}
 		if(!updated){
-			std::cout<<"Error in datastructure"<< std::endl;
+			std::cout<<"Error in datastructure while looking for "<< pt << std::endl;
 			return false;
 		}
 	}

@@ -134,8 +134,10 @@
 	<xacro:wall id="1" x="0" y="5" wx="10" wy="0.1"/>
 	<xacro:wall id="2" x="-5" y="0" wx="0.2" wy="10"/>
 	<xacro:wall id="3" x="5" y="0" wx="0.2" wy="10"/>
-	<xacro:wall id="4" x="-3" y="-5" wx="4" wy="0.2"/>
-	<xacro:wall id="5" x="3" y="-5" wx="4" wy="0.2"/>
+	<xacro:wall id="4" x="-3.5" y="-5" wx="3" wy="0.2"/>
+	<xacro:wall id="5" x="3.5" y="-5" wx="3" wy="0.2"/>
+	<xacro:wall id="6" x="-7" y="0" wx="4" wy="0.2"/>
+	<xacro:wall id="7" x="7" y="0" wx="4" wy="0.2"/>
 	
     <gui fullscreen='0'>
       <camera name='user_camera'>

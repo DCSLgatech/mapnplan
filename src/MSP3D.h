@@ -44,12 +44,13 @@ namespace msp{
 			std::vector<octomap::point3d> m_child_dir;
 			void setGiPublisher(ros::Publisher pub);
 			void setPathPublisher(ros::Publisher pub){m_rviz_traj_pub=pub;}
+			bool findLRNode(octomap::point3d& pt,octomap::OcTreeKey& key, octomap::point3d& coord);
 
 		protected:
 			void publishGiRviz();
 			bool inPath(octomap::point3d pt,double size);
 			octomap::OcTreeNode* findNode(octomap::point3d pt);
-			bool findLRNode(octomap::point3d& pt,octomap::OcTreeKey& key, octomap::point3d& coord);
+//			bool findLRNode(octomap::point3d& pt,octomap::OcTreeKey& key, octomap::point3d& coord);
 			//double low_cost(octomap::point3d pt);
 			void reducedGraph();
 			void Gfull();

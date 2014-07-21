@@ -19,8 +19,8 @@ double lastY=0;
 
 void wayPointsCallback(const visualization_msgs::Marker::ConstPtr& msg)
 {
-  traj=*msg;
-  traj.points.erase(traj.points.begin());
+	traj=*msg;
+	traj.points.erase(traj.points.begin());
 	double minds=1000;
 	int ind=0;
 	for(int i=0;i<traj.points.size();++i){
@@ -36,8 +36,8 @@ void wayPointsCallback(const visualization_msgs::Marker::ConstPtr& msg)
 		traj.points.erase(traj.points.begin(),traj.points.begin()+ind);
 	}
 	geometry_msgs::Point p=traj.points.front();
-	traj.points.erase(traj.points.begin());
-  x_desired=p.x;
+	//traj.points.erase(traj.points.begin());
+	x_desired=p.x;
 	y_desired=p.y;	
 }
 
