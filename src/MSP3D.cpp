@@ -11,7 +11,7 @@
 
 
 namespace msp{
-MSP3D::MSP3D(octomap::OcTree &tree, int max_depth):m_tree(tree),m_path_found(false),m_visu(false),m_alpha(3.0),m_eps(tree.getResolution()/10.0),m_max_tree_depth(max_depth),m_lambda1(0.5),m_lambda2(0.5) {
+MSP3D::MSP3D(octomap::OcTree &tree, int max_depth):m_tree(tree),m_path_found(false),m_visu(false),m_alpha(2.0),m_eps(tree.getResolution()/10.0),m_max_tree_depth(max_depth),m_lambda1(0.5),m_lambda2(0.5) {
 	m_M=100*pow(8,max_depth);
 	m_epsilon=0.49;
 	//	m_epsilon=pow(0.5,1+3*m_max_tree_depth);

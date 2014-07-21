@@ -136,10 +136,67 @@
 	<xacro:wall id="3" x="5" y="0" wx="0.2" wy="10"/>
 	<xacro:wall id="4" x="-3.5" y="-5" wx="3" wy="0.2"/>
 	<xacro:wall id="5" x="3.5" y="-5" wx="3" wy="0.2"/>
-	<xacro:wall id="6" x="-7" y="0" wx="4" wy="0.2"/>
-	<xacro:wall id="7" x="7" y="0" wx="4" wy="0.2"/>
+	<xacro:wall id="6" x="7.5" y="5" wx="5" wy="0.2"/>
+	<xacro:wall id="7" x="10" y="0" wx="0.2" wy="20"/>
+	<xacro:wall id="8" x="2.5" y="-10" wx="15" wy="0.2"/>
+	<xacro:wall id="9" x="-10" y="0" wx="0.2" wy="30"/>
+	<xacro:wall id="10" x="0" y="10" wx="20" wy="0.2"/>
 	
-	
+	<model name='goal'>
+      <pose>5 15 2.0 0 0 0</pose>
+      <link name='link'>
+        <inertial>
+          <mass>1</mass>
+          <inertia>
+            <ixx>1</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>1</iyy>
+            <iyz>0</iyz>
+            <izz>1</izz>
+          </inertia>
+        </inertial>
+        <collision name='collision'>
+          <geometry>
+            <sphere>
+              <radius>1</radius>
+            </sphere>
+          </geometry>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <bounce/>
+            <friction>
+              <ode/>
+            </friction>
+            <contact>
+              <ode/>
+            </contact>
+          </surface>
+        </collision>
+        <visual name='visual'>
+          <geometry>
+            <sphere>
+              <radius>1</radius>
+            </sphere>
+          </geometry>
+          <material>
+            <script>
+              <uri>file://media/materials/scripts/gazebo.material</uri>
+              <name>Gazebo/Red</name>
+            </script>
+          </material>
+        </visual>
+        <velocity_decay>
+          <linear>0</linear>
+          <angular>0</angular>
+        </velocity_decay>
+        <self_collide>0</self_collide>
+        <kinematic>0</kinematic>
+        <gravity>1</gravity>
+      </link>
+      <static>1</static>
+    </model>
+	    	
     <gui fullscreen='0'>
       <camera name='user_camera'>
         <pose>5 -5 2 0 0.275643 2.35619</pose>

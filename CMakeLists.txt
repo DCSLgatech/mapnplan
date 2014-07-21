@@ -149,6 +149,7 @@ file(GLOB model_xacro_files ${CMAKE_CURRENT_SOURCE_DIR}/worlds/*/*.xacro)
 # Dependency files
 file(GLOB world_xacro_files ${CMAKE_CURRENT_SOURCE_DIR}/worlds/*.sdf.xacro) 
 
+
 foreach(it ${world_xacro_files})
   get_filename_component(basepath ${it} PATH)
   get_filename_component(basename ${it} NAME_WE)

@@ -147,44 +147,44 @@ void octomapCallback(const octomap_msgs::Octomap& msg)
 	tree->prune();
 	transformTreeToMeanVal(tree->getRoot());	
 
-
-	if(planned){
-		octomap::OcTree* tree_padded;
-		octomap::AbstractOcTree* tree_padded1=octomap_msgs::msgToMap(msg);
-		if(tree_padded1){ // read error returns NULL
-			tree_padded = dynamic_cast<octomap::OcTree*>(tree_padded1);
-			if (tree_padded){ // cast succeeds if correct type
-			// do something....
-			}else{
-				return;
-			}
+	octomap::OcTree* tree_padded;
+	octomap::AbstractOcTree* tree_padded1=octomap_msgs::msgToMap(msg);
+	if(tree_padded1){ // read error returns NULL
+		tree_padded = dynamic_cast<octomap::OcTree*>(tree_padded1);
+		if (tree_padded){ // cast succeeds if correct type
+		// do something....
 		}else{
 			return;
 		}
-		transformTreeToMeanVal(tree_padded->getRoot());
-		for(octomap::OcTree::tree_iterator it = tree_padded->begin_tree(),	end=tree_padded->end_tree(); it!= end; ++it)
-		{
-			if(it.getCoordinate().z()-it.getSize()/2<robot_height && it.getCoordinate().z()+it.getSize()/2>robot_height){
-					if(it->getOccupancy()>unknownSpaceProba+0.01){
-						it->setLogOdds(octomap::logodds(1.0));
+	}else{
+		return;
+	}
+	transformTreeToMeanVal(tree_padded->getRoot());
+	for(octomap::OcTree::tree_iterator it = tree_padded->begin_tree(),	end=tree_padded->end_tree(); it!= end; ++it)
+	{
+		if(it.getCoordinate().z()-it.getSize()/2<robot_height && it.getCoordinate().z()+it.getSize()/2>robot_height){
+				if(it->getOccupancy()>unknownSpaceProba+0.01){
+					it->setLogOdds(octomap::logodds(1.0));
+				}else{
+					if(it->getOccupancy()<unknownSpaceProba-0.01){
+						it->setLogOdds(octomap::logodds(0.0));
 					}else{
-						if(it->getOccupancy()<unknownSpaceProba-0.01){
-							it->setLogOdds(octomap::logodds(0.0));
-						}else{
-							it->setLogOdds(octomap::logodds(0.5));
-						}
+						it->setLogOdds(octomap::logodds(0.5));
 					}
-			}else{
-				it->setLogOdds(octomap::logodds(1.0));
-			}
+				}
+		}else{
+			it->setLogOdds(octomap::logodds(1.0));
 		}
-		tree_padded->prune();
-		transformTreeToMeanVal(tree_padded->getRoot());
+	}
+	tree_padded->prune();
+	transformTreeToMeanVal(tree_padded->getRoot());
+
+
+	if(planned){
+
 		//Padding
-	//	octomap::point3d p1(-10000,-10000,0.2);
-	//	octomap::point3d p2(10000,10000,0.8);
-		octomap::point3d p1(-20,-20,robot_height);
-		octomap::point3d p2(20,20,robot_height);
+		octomap::point3d p1(-50,-50,robot_height);
+		octomap::point3d p2(50,50,robot_height);
 		double padding_radius=0.4;
 		octomap::point3d radius(padding_radius,padding_radius,padding_radius);
 		for(octomap::OcTree::leaf_bbx_iterator it = tree_padded->begin_leafs_bbx (p1,p2),	end=tree_padded->end_leafs_bbx (); it!= end; ++it)
@@ -277,42 +277,9 @@ void octomapCallback(const octomap_msgs::Octomap& msg)
 		}
 	}
 
-	octomap::OcTree* tree_padded;
-	octomap::AbstractOcTree* tree_padded1=octomap_msgs::msgToMap(msg);
-	if(tree_padded1){ // read error returns NULL
-		tree_padded = dynamic_cast<octomap::OcTree*>(tree_padded1);
-		if (tree_padded){ // cast succeeds if correct type
-		// do something....
-		}else{
-			return;
-		}
-	}else{
-		return;
-	}
-	transformTreeToMeanVal(tree_padded->getRoot());
-	for(octomap::OcTree::tree_iterator it = tree_padded->begin_tree(),	end=tree_padded->end_tree(); it!= end; ++it)
-	{
-		if(it.getCoordinate().z()-it.getSize()/2<robot_height && it.getCoordinate().z()+it.getSize()/2>robot_height){
-				if(it->getOccupancy()>unknownSpaceProba+0.01){
-					it->setLogOdds(octomap::logodds(1.0));
-				}else{
-					if(it->getOccupancy()<unknownSpaceProba-0.01){
-						it->setLogOdds(octomap::logodds(0.0));
-					}else{
-						it->setLogOdds(octomap::logodds(0.5));
-					}
-				}
-		}else{
-			it->setLogOdds(octomap::logodds(1.0));
-		}
-	}
-	tree_padded->prune();
-	transformTreeToMeanVal(tree_padded->getRoot());
 	//Padding
-//	octomap::point3d p1(-10000,-10000,0.2);
-//	octomap::point3d p2(10000,10000,0.8);
-	octomap::point3d p1(-20,-20,robot_height);
-	octomap::point3d p2(20,20,robot_height);
+	octomap::point3d p1(-50,-50,robot_height);
+	octomap::point3d p2(50,50,robot_height);
 	double padding_radius=1.0;
 	octomap::point3d radius(padding_radius,padding_radius,padding_radius);
 	for(octomap::OcTree::leaf_bbx_iterator it = tree_padded->begin_leafs_bbx (p1,p2),	end=tree_padded->end_leafs_bbx (); it!= end; ++it)
@@ -352,8 +319,8 @@ void octomapCallback(const octomap_msgs::Octomap& msg)
 	int count=1;
 	octomap::point3d p11;
 	octomap::point3d p22;
-	p11=octomap::point3d(-20,-20,robot_height);
-	p22=octomap::point3d(20,20,robot_height);
+	p11=octomap::point3d(-50,-50,robot_height);
+	p22=octomap::point3d(50,50,robot_height);
 	for(octomap::OcTree::leaf_bbx_iterator it2 = tree->begin_leafs_bbx (p11,p22),	end2=tree->end_leafs_bbx (); it2!= end2; ++it2)
 	{
 		visualization_msgs::Marker marker;
@@ -399,8 +366,8 @@ void octomapCallback(const octomap_msgs::Octomap& msg)
 
 //	msg1=visualization_msgs::MarkerArray();
 	count=1;
-	p11=octomap::point3d(-20,-20,robot_height);
-	p22=octomap::point3d(20,20,robot_height);
+	p11=octomap::point3d(-50,-50,robot_height);
+	p22=octomap::point3d(50,50,robot_height);
 	for(octomap::OcTree::leaf_bbx_iterator it2 = tree_padded->begin_leafs_bbx (p11,p22),	end2=tree_padded->end_leafs_bbx (); it2!= end2; ++it2)
 	{
 		visualization_msgs::Marker marker;

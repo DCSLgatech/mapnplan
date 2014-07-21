@@ -4,7 +4,7 @@
 
   <!-- We resume the logic in empty_world.launch, changing only the name of the world to be launched -->
   <include file="$(find gazebo_ros)/launch/empty_world.launch">
-    <arg name="world_name" value="$(find mapnplan)/worlds/maze.sdf"/> <!-- Note: the world_name is with respect to GAZEBO_RESOURCE_PATH environmental variable -->
+    <arg name="world_name" value="$(find mapnplan)/worlds/maze2.sdf"/> <!-- Note: the world_name is with respect to GAZEBO_RESOURCE_PATH environmental variable -->
     <arg name="paused" value="true"/>
     <arg name="use_sim_time" value="true"/>
     <arg name="gui" value="true"/>
@@ -56,7 +56,7 @@
 <node name="planner" pkg="mapnplan" type="planner" output="screen"/>
 
 <node pkg="rostopic" type="rostopic" name="goal_pub"
-        args='pub planner_goal -1 geometry_msgs/Point "{x: 2.0, y: 10.0, z: 0.0}" ' output="screen" />
+        args='pub planner_goal -1 geometry_msgs/Point "{x: 5.0, y: 15.0, z: 0.0}" ' output="screen" />
 
  <!--<node name="controller_spawner" pkg="controller_manager" type="spawner"
           args="$(find mapnplan)/config/controller.yaml"/> -->
