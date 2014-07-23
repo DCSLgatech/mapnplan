@@ -53,7 +53,7 @@ void sendStop(){
 
 void measurementCallback(const nav_msgs::Odometry::ConstPtr& msg)
 {
-	//if(!running)
+//	if(!running)
 		start=octomap::point3d(msg->pose.pose.position.x,msg->pose.pose.position.y,robot_height);
 }
 
@@ -217,7 +217,7 @@ void octomapCallback(const octomap_msgs::Octomap& msg)
 		msp::MSP3D algo(*tree_padded,16);
 		// "smoothing"
 		octomap::point3d cur=start;
-		cpath.push_front(start);
+//		cpath.push_front(start);
 //		int i=1;
 //		while(i<cpath.size()){
 //			double dinc=0.2;
@@ -242,6 +242,8 @@ void octomapCallback(const octomap_msgs::Octomap& msg)
 //				i=i+1;
 //			}
 //		}
+
+		cpath.erase(cpath.begin());
 		cpath.push_front(start);
 		bool safe=true;
 		for(int i=0;i<cpath.size()-1;i++){
@@ -267,13 +269,18 @@ void octomapCallback(const octomap_msgs::Octomap& msg)
 				break;
 			}
 		}
+//		std::cout<< "cpath" <<std::endl;
+//		for(int i=0;i<cpath.size();i++){
+//			std::cout << cpath[i] << " -> ";
+//		}
+//		std::cout<<std::endl;
 		if(!safe){
 			sendStop();
 			planned=false;
 		}else{
-			if (cpath.front()==start){
-				cpath.erase(cpath.begin());
-			}
+//			if (cpath.front()==start){
+//				cpath.erase(cpath.begin());
+//			}
 		}
 	}
 
@@ -427,7 +434,7 @@ void octomapCallback(const octomap_msgs::Octomap& msg)
 	free(tree_padded);
 	running=false;
 	planned=true;
-	//}
+	}
 	
 	//publish traj
 	visualization_msgs::Marker traj_visu;
@@ -446,9 +453,10 @@ void octomapCallback(const octomap_msgs::Octomap& msg)
 //		cpath.erase(cpath.begin());
 //	}
 //
-//	if((cpath.front()-start).norm()<0.5){
-//		cpath.erase(cpath.begin());
-//	}
+	while((cpath.front()-start).norm()<0.5){
+		cpath.erase(cpath.begin());
+	}
+	cpath.push_front(start);
 	for(int i=0;i<cpath.size();++i){
 		geometry_msgs::Point p;
 		p.x=cpath[i].x();
@@ -457,7 +465,6 @@ void octomapCallback(const octomap_msgs::Octomap& msg)
 		traj_visu.points.push_back(p);
 	}
 	rviz_traj_pub.publish(traj_visu);
-	}
 //	ros::Duration(5.0).sleep();
 }
 

@@ -45,6 +45,7 @@ namespace msp{
 			void setGiPublisher(ros::Publisher pub);
 			void setPathPublisher(ros::Publisher pub){m_rviz_traj_pub=pub;}
 			bool findLRNode(octomap::point3d& pt,octomap::OcTreeKey& key, octomap::point3d& coord);
+			bool hasChildrenLRNode(octomap::point3d& pt);
 
 		protected:
 			void publishGiRviz();

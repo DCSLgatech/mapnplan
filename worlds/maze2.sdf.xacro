@@ -139,7 +139,7 @@
 	<xacro:wall id="6" x="7.5" y="5" wx="5" wy="0.2"/>
 	<xacro:wall id="7" x="10" y="0" wx="0.2" wy="20"/>
 	<xacro:wall id="8" x="2.5" y="-10" wx="15" wy="0.2"/>
-	<xacro:wall id="9" x="-10" y="0" wx="0.2" wy="30"/>
+	<xacro:wall id="9" x="-10" y="0" wx="0.2" wy="20"/>
 	<xacro:wall id="10" x="0" y="10" wx="20" wy="0.2"/>
 	
 	<model name='goal'>

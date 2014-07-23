@@ -36,7 +36,7 @@ void wayPointsCallback(const visualization_msgs::Marker::ConstPtr& msg)
 		traj.points.erase(traj.points.begin(),traj.points.begin()+ind);
 	}
 	geometry_msgs::Point p=traj.points.front();
-	//traj.points.erase(traj.points.begin());
+	traj.points.erase(traj.points.begin());
 	x_desired=p.x;
 	y_desired=p.y;	
 }

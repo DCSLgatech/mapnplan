@@ -104,22 +104,12 @@ bool MSP3D::step(){
 			m_path_cost.push_back(m_cost[next_point_id]);
 			m_full_path_estimate_cost.push_back(full_path_estimate_cost);
 
-			int mv_fwd=2;
 			if(m_speed_up){
+				int mv_fwd=2;
 				while(result->length()>mv_fwd){
 					int next_point_id2=result->GetVertex(mv_fwd)->getID();
 					//TODO : repalce test by if next vertex at finest resolution, aka, no children
-//					octomap::OcTreeKey key;
-//					octomap::point3d key_coord;
-//					findLRNode2(m_nodes[next_point_id2].first, key, key_coord);
-//					std::cout<<m_nodes[next_point_id2].first<<std::endl;
-//					std::cout<<m_cost[next_point_id2]/pow(m_nodes[next_point_id2].second,3)*pow(m_tree.getResolution(),3)<<std::endl;
-//					std::cout<<1-m_epsilon/pow(m_nodes[next_point_id2].second,3)*pow(m_tree.getResolution(),3)<<std::endl;
-//					std::cout<<key_coord<<std::endl;
-//					for(int kk=0;kk<8;++kk){
-//						std::cout<<m_tree.search(key)->childExists(kk)<<std::endl;
-//					}
-					if(!hasChildrenLRNode(m_nodes[next_point_id2].first)){
+					if(m_nodes[next_point_id2].second==m_nodes[next_point_id].second){
 						//m_visited[m_nodes[next_point_id].first]=	m_visited[m_nodes[next_point_id].first]+1;
 						m_misleading[m_nodes[next_point_id].first].insert(m_nodes[next_point_id2].first);
 //						m_misleading[m_start_coord].insert(m_nodes[next_point_id2].first);
@@ -129,7 +119,6 @@ bool MSP3D::step(){
 						next_point_id=next_point_id2;
 						++mv_fwd;
 					}else{
-//						std::cout<<"breaking"<<std::endl;
 						break;
 					}
 				}
@@ -152,33 +141,33 @@ bool MSP3D::step(){
 				//				std::cout << it_name.str() << std::endl;
 				return false;
 			}else{
-				visualization_msgs::Marker traj_visu;
-				traj_visu.header.frame_id="/odom";
-				traj_visu.header.stamp=ros::Time::now();
-				traj_visu.ns="traj2";
-				traj_visu.type=visualization_msgs::Marker::LINE_STRIP;
-				traj_visu.action=visualization_msgs::Marker::ADD;
-				traj_visu.id=1;
-				traj_visu.scale.x=0.05;
-				traj_visu.scale.y=0.05;
-				traj_visu.scale.z=0.05;
-				traj_visu.color.g = 1.0;
-				traj_visu.color.a = 1.0;
-				for(int i=0;i<m_current_path.size();++i){
-					geometry_msgs::Point p;
-					p.x=m_current_path[i].x();
-					p.y=m_current_path[i].y();
-					p.z=2;
-					traj_visu.points.push_back(p);
-				}
-				for(int i=mv_fwd;i<result->length();++i){
-					geometry_msgs::Point p;
-					p.x=m_nodes[result->GetVertex(i)->getID()].first.x();
-					p.y=m_nodes[result->GetVertex(i)->getID()].first.y();
-					p.z=2;
-					traj_visu.points.push_back(p);
-				}
-				m_rviz_traj_pub.publish(traj_visu);
+//				visualization_msgs::Marker traj_visu;
+//				traj_visu.header.frame_id="/odom";
+//				traj_visu.header.stamp=ros::Time::now();
+//				traj_visu.ns="traj2";
+//				traj_visu.type=visualization_msgs::Marker::LINE_STRIP;
+//				traj_visu.action=visualization_msgs::Marker::ADD;
+//				traj_visu.id=1;
+//				traj_visu.scale.x=0.05;
+//				traj_visu.scale.y=0.05;
+//				traj_visu.scale.z=0.05;
+//				traj_visu.color.g = 1.0;
+//				traj_visu.color.a = 1.0;
+//				for(int i=0;i<m_current_path.size();++i){
+//					geometry_msgs::Point p;
+//					p.x=m_current_path[i].x();
+//					p.y=m_current_path[i].y();
+//					p.z=2;
+//					traj_visu.points.push_back(p);
+//				}
+//				for(int i=0;i<result->length();++i){
+//					geometry_msgs::Point p;
+//					p.x=m_nodes[result->GetVertex(i)->getID()].first.x();
+//					p.y=m_nodes[result->GetVertex(i)->getID()].first.y();
+//					p.z=2;
+//					traj_visu.points.push_back(p);
+//				}
+//				m_rviz_traj_pub.publish(traj_visu);
 				return true;
 			}
 		}
@@ -215,7 +204,6 @@ bool MSP3D::run(){
 	std::cout<< "NB backtrack : " << m_nb_backtrack << std::endl;
 	if(m_path_found){
 		std::cout << "Goal MSP3D: " << m_end_coord << std::endl;
-		std::cout << "nb iteration " << m_nb_step << std::endl;
 		ROS_INFO("path found");
 		return true;
 	}else{
@@ -348,37 +336,6 @@ bool MSP3D::findLRNode(octomap::point3d& pt,octomap::OcTreeKey& key, octomap::po
 	m_tree.coordToKeyChecked(pos,key);
 	coord=pos;
 	return true;
-}
-
-bool MSP3D::hasChildrenLRNode(octomap::point3d& pt){
-	octomap::OcTreeNode* node=m_tree.getRoot();
-	octomap::point3d pos(0,0,0);
-	double size=m_tree.getNodeSize(0);
-	bool result=false;
-	while(node->hasChildren() && !result){
-		bool updated=false;
-		if((pt-pos).norm()<m_eps){
-			return node->hasChildren();
-		}else{
-			for(int i=0;i<8;++i){
-				//			std::cout << "pt " << pt <<std::endl;
-				//			std::cout << "pos " << pos+m_child_dir[i]*0.25*size <<std::endl;
-				//			std::cout << "size " << 0.5*size <<std::endl;
-				if(is_in(pt,std::pair<octomap::point3d,double>(pos+m_child_dir[i]*0.25*size,size*0.5))){
-					node=node->getChild(i);
-					pos=pos+m_child_dir[i]*0.25*size;
-					size=size*0.5;
-					updated=true;
-					break;
-				}
-			}
-			if(!updated){
-				std::cout<<"Error in datastructure while looking for "<< pt << std::endl;
-				return true;
-			}
-		}
-	}
-	return false;
 }
 
 void MSP3D::add_node_to_reduced_vertices(octomap::OcTreeNode* node,octomap::point3d coord, double size){
