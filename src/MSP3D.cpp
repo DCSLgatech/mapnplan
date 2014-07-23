@@ -32,6 +32,8 @@ void MSP3D::setGiPublisher(ros::Publisher pub){
 }
 
 bool MSP3D::init(octomap::point3d start,octomap::point3d end){
+	m_real_start=start;
+	m_real_end=end;
 	if(findLRNode(start, m_start, m_start_coord) && findLRNode(end, m_end, m_end_coord)){
 		//		std::cout << "Start :" << start << std::endl;
 		//		std::cout << m_start_coord << std::endl;
@@ -224,6 +226,82 @@ bool MSP3D::run(){
 	}
 }
 
+void MSP3D::setGuess(std::deque<octomap::point3d> cpath){
+	if(cpath.size()>1){
+		octomap::OcTreeKey pkey;
+		octomap::point3d pcoord=m_start_coord;
+		int count=0;
+		bool safe=true;
+		for(int i=0;i<cpath.size()-1;i++){
+			double dinc=m_tree.getResolution()/2;
+			octomap::point3d cur=cpath[i];
+			octomap::point3d cur2=cpath[i+1];
+			octomap::point3d inc=(cur2-cur)*(dinc/(cur2-cur).norm());
+			int jmax= (int)floor((cur2-cur).norm()/dinc);
+			for(int j=1;j<jmax;++j){
+				octomap::OcTreeKey key;
+				octomap::point3d coord;
+				octomap::point3d pointToTest=cur+inc*j;
+				double cost=costLRNode(pointToTest, key, coord);
+				if(cost>=m_M){
+					std::cout << "obstacle on path at " << pointToTest << "in tree at "<< coord << "with value " << m_tree.search(key)->getOccupancy()<< std::endl;
+					safe=false;
+					break;
+				}else{
+					if(key!=pkey){
+						m_misleading[pcoord]=std::set<octomap::point3d,Point3D_Less>();
+						m_misleading[pcoord].insert(coord);
+						m_current_path.push_back(coord);
+						m_path_cost.push_back(cost);
+						m_current_coord=coord;
+						pcoord=coord;
+						pkey=key;
+						++count;
+					}
+				}
+			}
+			if(!safe){
+				break;
+			}
+		}
+		std::cout<<"guess created " << count << " nodes in path" <<std::endl;
+		if(!safe){
+			bool safe2=true;
+			//identify path safe tail and plan till beginning of the tail (better would to "closest" tail point)
+			int tail_begin=cpath.size();
+			for(int i=cpath.size()-1;i>0;i--){
+				double dinc=m_tree.getResolution()/2;
+				octomap::point3d cur=cpath[i];
+				octomap::point3d cur2=cpath[i-1];
+				octomap::point3d inc=(cur2-cur)*(dinc/(cur2-cur).norm());
+				int jmax= (int)floor((cur2-cur).norm()/dinc);
+				for(int j=1;j<jmax;++j){
+					octomap::OcTreeKey key;
+					octomap::point3d coord;
+					octomap::point3d pointToTest=cur+inc*j;
+					double cost=costLRNode(pointToTest, key, coord);
+					if(cost>=m_M){
+						std::cout << "obstacle on guess at " << pointToTest << "in tree at "<< coord << "with value " << m_tree.search(key)->getOccupancy()<< std::endl;
+						std::cout << "position on guess from end " << cpath.size()-i << std::endl;
+						safe2=false;
+						break;
+					}
+				}
+				if(!safe2){
+					break;
+				}else{
+					tail_begin=i-1;
+				}
+			}
+			if(tail_begin!=cpath.size()){
+				m_tail=std::deque<octomap::point3d>(cpath.begin()+tail_begin,cpath.end());
+				findLRNode(cpath[tail_begin], m_end, m_end_coord);
+				std::cout << "using tail of length " <<  cpath.size()-tail_begin << std::endl;
+			}
+		}
+	}
+}
+
 
 bool MSP3D::runAs(){
 	clock_t tstart = clock();
@@ -250,6 +328,12 @@ bool MSP3D::runAs(){
 }
 
 std::deque<octomap::point3d> MSP3D::getPath(){
+	m_current_path.push_front(m_real_start);
+	if(m_tail.size()>0){
+		m_current_path.insert(m_current_path.end(),m_tail.begin(),m_tail.end());
+	}else{
+		m_current_path.push_back(m_real_end);
+	}
 	double robot_height=0.545;
 	for(int i=0;i<m_current_path.size();++i){
 		m_current_path[i].z()=robot_height;
@@ -348,6 +432,34 @@ bool MSP3D::findLRNode(octomap::point3d& pt,octomap::OcTreeKey& key, octomap::po
 	m_tree.coordToKeyChecked(pos,key);
 	coord=pos;
 	return true;
+}
+
+double MSP3D::costLRNode(octomap::point3d& pt,octomap::OcTreeKey& key, octomap::point3d& coord){
+	octomap::OcTreeNode* node=m_tree.getRoot();
+	octomap::point3d pos(0,0,0);
+	double size=m_tree.getNodeSize(0);
+	while(node->hasChildren()){
+		bool updated=false;
+		for(int i=0;i<8;++i){
+			//			std::cout << "pt " << pt <<std::endl;
+			//			std::cout << "pos " << pos+m_child_dir[i]*0.25*size <<std::endl;
+			//			std::cout << "size " << 0.5*size <<std::endl;
+			if(is_in(pt,std::pair<octomap::point3d,double>(pos+m_child_dir[i]*0.25*size,size*0.5))){
+				node=node->getChild(i);
+				pos=pos+m_child_dir[i]*0.25*size;
+				size=size*0.5;
+				updated=true;
+				break;
+			}
+		}
+		if(!updated){
+			std::cout<<"Error in datastructure while looking for "<< pt << std::endl;
+			return m_M;
+		}
+	}
+	m_tree.coordToKeyChecked(pos,key);
+	coord=pos;
+	return cost_func(node->getOccupancy(),size)*pow(size/m_tree.getResolution(),3);
 }
 
 bool MSP3D::hasChildrenLRNode(octomap::point3d& pt){

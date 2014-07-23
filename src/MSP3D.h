@@ -45,7 +45,9 @@ namespace msp{
 			void setGiPublisher(ros::Publisher pub);
 			void setPathPublisher(ros::Publisher pub){m_rviz_traj_pub=pub;}
 			bool findLRNode(octomap::point3d& pt,octomap::OcTreeKey& key, octomap::point3d& coord);
+			double costLRNode(octomap::point3d& pt,octomap::OcTreeKey& key, octomap::point3d& coord);
 			bool hasChildrenLRNode(octomap::point3d& pt);
+			void setGuess(std::deque<octomap::point3d> cpath);
 
 		protected:
 			void publishGiRviz();
@@ -66,6 +68,8 @@ namespace msp{
 			void add_node_to_reduced_vertices(octomap::OcTreeNode* node,octomap::point3d coord, double size);
 			octomap::OcTreeKey m_start;
 			octomap::OcTreeKey m_end;
+			octomap::point3d m_real_start;
+			octomap::point3d m_real_end;
 			octomap::point3d m_start_coord;
 			octomap::point3d m_end_coord;
 			//octomap::OcTreeKey m_current_point;
@@ -78,6 +82,7 @@ namespace msp{
 			bool m_visu;
 			bool m_path_found;
 			std::deque<octomap::point3d> m_current_path;
+			std::deque<octomap::point3d> m_tail;
 			kshortestpaths::Graph m_graph;
 			std::map<octomap::point3d,double,Point3D_Less> m_visited;
 			std::map<octomap::point3d,std::set<octomap::point3d,Point3D_Less>,Point3D_Less> m_misleading;

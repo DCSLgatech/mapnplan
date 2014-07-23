@@ -18,6 +18,7 @@ ros::Publisher rviz_marker_array_pub;
 double robot_height=0.545;
 octomap::point3d goal(0,0,0);
 octomap::point3d start(0,0,0);
+octomap::point3d pstart(0,0,0);
 octomap::point3d waypoint2(0,0,robot_height);
 bool running=false;
 bool planned=false;
@@ -258,7 +259,7 @@ void octomapCallback(const octomap_msgs::Octomap& msg)
 				octomap::point3d pointToTest=cur+inc*j;
 				algo.findLRNode(pointToTest, key, coord);
 				if(tree_padded->search(key)->getOccupancy()>0.51){
-					std:;cout << "obstacle on path at " << pointToTest << "in tree at "<< coord << "with value " << tree_padded->search(key)->getOccupancy()<< std::endl;
+					std::cout << "obstacle on path at " << pointToTest << "in tree at "<< coord << "with value " << tree_padded->search(key)->getOccupancy()<< std::endl;
 					if((pointToTest-start).norm()<10){
 						safe=false;
 						break;
@@ -408,6 +409,7 @@ void octomapCallback(const octomap_msgs::Octomap& msg)
 	algo.setGiPublisher(rviz_marker_array_pub);
 	algo.setPathPublisher(rviz_traj2_pub);
 	algo.init(start,goal);
+	algo.setGuess(cpath);
 	if (!algo.run()){
 		return;
 	}
@@ -453,9 +455,16 @@ void octomapCallback(const octomap_msgs::Octomap& msg)
 //		cpath.erase(cpath.begin());
 //	}
 //
-	while((cpath.front()-start).norm()<0.5){
-		cpath.erase(cpath.begin());
+	if(pstart==start){
+		while((cpath.front()-start).norm()<0.5){
+			cpath.erase(cpath.begin());
+		}
+	}else{
+		while((cpath.front()-((start-pstart)*(cpath.front()-start).dot(start-pstart))).norm()<0.5 || (cpath.front()-start).norm()<0.5){
+			cpath.erase(cpath.begin());
+		}
 	}
+	pstart=start;
 	cpath.push_front(start);
 	for(int i=0;i<cpath.size();++i){
 		geometry_msgs::Point p;
