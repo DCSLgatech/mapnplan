@@ -460,7 +460,7 @@ void octomapCallback(const octomap_msgs::Octomap& msg)
 			cpath.erase(cpath.begin());
 		}
 	}else{
-		while((cpath.front()-((start-pstart)*(cpath.front()-start).dot(start-pstart))).norm()<0.5 || (cpath.front()-start).norm()<0.5){
+		while(((cpath.front()-start-((start-pstart)*((cpath.front()-start).dot(start-pstart)/((start-pstart).norm())))).norm()<1.0  && (cpath.front()-start).dot(start-pstart)<0)|| (cpath.front()-start).norm()<0.5){
 			cpath.erase(cpath.begin());
 		}
 	}

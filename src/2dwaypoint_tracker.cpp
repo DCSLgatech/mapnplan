@@ -9,10 +9,10 @@ ros::Publisher command_pub;
 double x_desired=0;
 double y_desired=0;
 
-double V_max=2;
-double omega_max=3;
-double dtheta_max=0.2;
-double ds_max=0.5;
+double V_max=3;
+double omega_max=4;
+double dtheta_max=0.5;
+double ds_max=2.0;
 visualization_msgs::Marker traj;
 double lastX=0;
 double lastY=0;
