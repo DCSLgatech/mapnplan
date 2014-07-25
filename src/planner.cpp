@@ -404,77 +404,87 @@ void octomapCallback(const octomap_msgs::Octomap& msg)
 
 	if(!planned){
 
-	//create algo and solve
-	msp::MSP3D algo(*tree_padded,16);
-	algo.setGiPublisher(rviz_marker_array_pub);
-	algo.setPathPublisher(rviz_traj2_pub);
-	algo.init(start,goal);
-	algo.setGuess(cpath);
-	if (!algo.run()){
-		return;
-	}
-	std::cout<<"Goal: "<< goal << std::endl;
-	//get solution and publish
-	std::deque<octomap::point3d> sol=algo.getPath();
-	if(sol.size()<2){
-		std::cout<< "invalid solution" << std::endl;
-		running=false;
-		return;
-	}
-	cpath=sol;
-	geometry_msgs::Point waypoint;
-	waypoint.x=sol[1].x();
-	waypoint.y=sol[1].y();
-	waypoint.z=robot_height;
-	waypoint_pub.publish(waypoint);
-	waypoint2=sol[1];
+		//create algo and solve
+		msp::MSP3D algo(*tree_padded,16);
+		algo.setGiPublisher(rviz_marker_array_pub);
+		algo.setPathPublisher(rviz_traj2_pub);
+		algo.init(start,goal);
+		algo.setGuess(cpath);
+		if (!algo.run()){
+			return;
+		}
+		std::cout<<"Goal: "<< goal << std::endl;
+		//get solution and publish
+		std::deque<octomap::point3d> sol=algo.getPath();
+		if(sol.size()<2){
+			std::cout<< "invalid solution" << std::endl;
+			running=false;
+			return;
+		}
+		cpath=sol;
+		geometry_msgs::Point waypoint;
+		waypoint.x=sol[1].x();
+		waypoint.y=sol[1].y();
+		waypoint.z=robot_height;
+		waypoint_pub.publish(waypoint);
+		waypoint2=sol[1];
 
-	//free memory
-	tree->clear();
-	tree_padded->clear();
-	free(tree);
-	free(tree_padded);
-	running=false;
-	planned=true;
+		//free memory
+		tree->clear();
+		tree_padded->clear();
+		free(tree);
+		free(tree_padded);
+		running=false;
+		planned=true;
+		//publish traj
+		visualization_msgs::Marker traj_visu;
+		traj_visu.header.frame_id="/odom";
+		traj_visu.header.stamp=ros::Time::now();
+		traj_visu.ns="traj";
+		traj_visu.type=visualization_msgs::Marker::LINE_STRIP;
+		traj_visu.action=visualization_msgs::Marker::ADD;
+		traj_visu.id=1;
+		traj_visu.scale.x=0.05;
+		traj_visu.scale.y=0.05;
+		traj_visu.scale.z=0.05;
+		traj_visu.color.r = 1.0;
+		traj_visu.color.a = 1.0;
+	//	if (cpath.front()==start){
+	//		cpath.erase(cpath.begin());
+	//	}
+	//
+		if(pstart==start){
+			while((cpath.front()-start).norm()<0.5){
+				cpath.erase(cpath.begin());
+			}
+		}else{
+	//		while(((cpath.front()-start-((start-pstart)*((cpath.front()-start).dot(start-pstart)/((start-pstart).norm())))).norm()<1.0  && (cpath.front()-start).dot(start-pstart)<0)|| (cpath.front()-start).norm()<0.5){
+	//			cpath.erase(cpath.begin());
+	//		}
+		}
+		pstart=start;
+//		cpath.push_front(start);
+		for(int i=0;i<cpath.size();++i){
+			geometry_msgs::Point p;
+			p.x=cpath[i].x();
+			p.y=cpath[i].y();
+			p.z=2*robot_height;
+			traj_visu.points.push_back(p);
+		}
+		rviz_traj_pub.publish(traj_visu);
 	}
-	
-	//publish traj
-	visualization_msgs::Marker traj_visu;
-	traj_visu.header.frame_id="/odom";
-	traj_visu.header.stamp=ros::Time::now();
-	traj_visu.ns="traj";
-	traj_visu.type=visualization_msgs::Marker::LINE_STRIP;
-	traj_visu.action=visualization_msgs::Marker::ADD;
-	traj_visu.id=1;
-	traj_visu.scale.x=0.05;
-	traj_visu.scale.y=0.05;
-	traj_visu.scale.z=0.05;
-	traj_visu.color.r = 1.0;
-	traj_visu.color.a = 1.0;
-//	if (cpath.front()==start){
-//		cpath.erase(cpath.begin());
-//	}
-//
+
 	if(pstart==start){
-		while((cpath.front()-start).norm()<0.5){
+		while((cpath.front()-start).norm()<2.0){
 			cpath.erase(cpath.begin());
 		}
 	}else{
-		while(((cpath.front()-start-((start-pstart)*((cpath.front()-start).dot(start-pstart)/((start-pstart).norm())))).norm()<1.0  && (cpath.front()-start).dot(start-pstart)<0)|| (cpath.front()-start).norm()<0.5){
+		while(((cpath.front()-start-((start-pstart)*((cpath.front()-start).dot(start-pstart)/((start-pstart).norm())))).norm()<1.0  && (cpath.front()-start).dot(start-pstart)<0)|| (cpath.front()-start).norm()<2.0){
 			cpath.erase(cpath.begin());
 		}
 	}
 	pstart=start;
 	cpath.push_front(start);
-	for(int i=0;i<cpath.size();++i){
-		geometry_msgs::Point p;
-		p.x=cpath[i].x();
-		p.y=cpath[i].y();
-		p.z=2*robot_height;
-		traj_visu.points.push_back(p);
-	}
-	rviz_traj_pub.publish(traj_visu);
-//	ros::Duration(5.0).sleep();
 }
 
 int main(int argc, char **argv)
